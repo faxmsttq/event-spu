@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>รายละเอียดกิจกรรม · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="events.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
+    <nav class="nav">
+      <a href="events.html" class="on"><i class="icon icon-18 i-house"></i>กิจกรรม</a>
+      <a href="saved.html"><i class="icon icon-18 i-heart"></i>บันทึกไว้</a>
+      <a href="mine.html"><i class="icon icon-18 i-clip"></i>ของฉัน</a>
+      <a href="notifications.html"><i class="icon icon-18 i-bell"></i>แจ้งเตือน</a>
+      <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn outline sm create-btn" href="create.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="avatar" id="avatar" href="profile.html"></a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container">
+    <a class="back" href="events.html"><i class="icon icon-16 i-arrow-left"></i> กลับไปหน้ากิจกรรม</a>
+
+    <!-- แสดงเมื่อหากิจกรรมไม่เจอ -->
+    <div class="empty box" id="notFound" hidden>
+      <h3>ไม่พบกิจกรรมนี้</h3>
+      <p class="muted">กิจกรรมอาจถูกลบ หรือยังไม่เปิดให้เห็น</p>
+      <a class="btn primary" href="events.html">ค้นหากิจกรรม</a>
+    </div>
+
+    <!-- รายละเอียดกิจกรรม (JavaScript จะเติมข้อมูลให้) -->
+    <div class="detail rise" id="detail">
+      <div class="detail-poster" id="poster"></div>
+
+      <aside class="detail-side box">
+        <h1 id="title"></h1>
+        <div class="meta"><i class="icon icon-18 i-cal"></i><span id="time"></span></div>
+        <div class="meta"><i class="icon icon-18 i-pin"></i><span id="place"></span></div>
+        <div class="meta"><i class="icon icon-18 i-user"></i><span id="organizer"></span></div>
+        <div class="progress-row">
+          <span id="joinedText"></span>
+          <span id="badge"></span>
+        </div>
+        <div class="bar"><i id="bar"></i></div>
+        <div class="side-acts">
+          <button class="btn primary block lg" id="joinBtn">เข้าร่วมกิจกรรม</button>
+          <button class="link-btn danger-link" id="leaveBtn" hidden>ยกเลิกการเข้าร่วม</button>
+          <button class="btn outline block" id="saveBtn"></button>
+          <button class="btn ghost block" id="calendarBtn"><i class="icon icon-18 i-cal"></i> เพิ่มลงปฏิทิน</button>
+        </div>
+      </aside>
+
+      <div class="detail-about">
+        <h2>เกี่ยวกับกิจกรรม</h2>
+        <p class="muted" id="desc"></p>
+        <div class="two-cards">
+          <div class="box"><h3>ผู้เข้าร่วม</h3><p class="muted" id="who"></p></div>
+          <div class="box"><h3>สิ่งที่ต้องเตรียม</h3><p class="muted" id="bring"></p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="tabbar">
+  <a href="events.html" class="on"><i class="icon i-house"></i>กิจกรรม</a>
+  <a href="saved.html"><i class="icon i-heart"></i>บันทึกไว้</a>
+  <a href="mine.html"><i class="icon i-clip"></i>ของฉัน</a>
+  <a href="notifications.html"><i class="icon i-bell"></i>แจ้งเตือน</a>
+  <a href="profile.html"><i class="icon i-user"></i>โปรไฟล์</a>
+</nav>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้ารายละเอียดกิจกรรม =====
+  requireLogin();
+
+  // อ่าน id จากลิงก์ เช่น event.html?id=e1 → "e1"
+  const eventId = new URLSearchParams(location.search).get("id");
+
+  const joinBtn = document.getElementById("joinBtn");
+  const leaveBtn = document.getElementById("leaveBtn");
+  const saveBtn = document.getElementById("saveBtn");
+
+  function showEvent() {
+    const user = getCurrentUser();
+    const event = getEventById(eventId);
+
+    // ไม่เจอกิจกรรม หรือเป็นกิจกรรมรอตรวจสอบของคนอื่น
+    if (!event || (event.status === "pending" && event.createdBy !== user.email)) {
+      document.getElementById("notFound").hidden = false;
+      document.getElementById("detail").hidden = true;
+      return;
+    }
+
+    // เติมข้อมูลลงในหน้า
+    document.title = event.title + " · SPU Event";
+    document.getElementById("poster").innerHTML = posterHTML(event, "big");
+    document.getElementById("title").textContent = event.title;
+    document.getElementById("time").textContent = eventTime(event);
+    document.getElementById("place").textContent = event.place;
+    document.getElementById("organizer").textContent = event.organizer;
+    document.getElementById("desc").textContent = event.desc || "ยังไม่มีรายละเอียด";
+    document.getElementById("who").textContent = event.who || "-";
+    document.getElementById("bring").textContent = event.bring || "-";
+    document.getElementById("joinedText").textContent = "เข้าร่วมแล้ว " + event.joined + "/" + event.cap;
+    document.getElementById("badge").innerHTML = badgeHTML(event);
+
+    // แถบความคืบหน้า = จำนวนคนเข้าร่วม ÷ จำนวนที่รับ
+    const percent = Math.min(100, Math.round(event.joined / event.cap * 100));
+    document.getElementById("bar").style.width = percent + "%";
+
+    // ปุ่มเข้าร่วม: เปลี่ยนข้อความตามสถานะ
+    const joined = user.joined.includes(event.id);
+    joinBtn.disabled = true;
+    leaveBtn.hidden = true;
+    if (event.createdBy === user.email) {
+      joinBtn.textContent = "คุณเป็นผู้จัดกิจกรรมนี้";
+    } else if (joined) {
+      joinBtn.textContent = "✓ เข้าร่วมแล้ว";
+      leaveBtn.hidden = isPast(event); // ยกเลิกได้เฉพาะกิจกรรมที่ยังไม่จบ
+    } else if (isOpen(event)) {
+      joinBtn.textContent = "เข้าร่วมกิจกรรม";
+      joinBtn.disabled = false;
+    } else if (isPast(event)) {
+      joinBtn.textContent = "กิจกรรมจบแล้ว";
+    } else {
+      joinBtn.textContent = "ปิดรับสมัคร";
+    }
+
+    // ปุ่มบันทึก
+    const saved = user.saved.includes(event.id);
+    saveBtn.innerHTML = saved
+      ? '<i class="icon icon-18 i-heart-fill"></i> บันทึกแล้ว'
+      : '<i class="icon icon-18 i-heart"></i> บันทึกไว้';
+    saveBtn.classList.toggle("is-saved", saved);
+  }
+
+  // กด "เข้าร่วมกิจกรรม"
+  joinBtn.addEventListener("click", function () {
+    const event = getEventById(eventId);
+    if (!confirm("ยืนยันเข้าร่วม \"" + event.title + "\" ใช่ไหม?")) return;
+
+    const user = getCurrentUser();
+    event.joined = event.joined + 1;
+    user.joined.push(event.id);
+    updateEvent(event);
+    updateCurrentUser(user);
+
+    showToast("เข้าร่วมกิจกรรมแล้ว เจอกันที่งานนะ");
+    showEvent();
+  });
+
+  // กด "ยกเลิกการเข้าร่วม"
+  leaveBtn.addEventListener("click", function () {
+    if (!confirm("ยกเลิกการเข้าร่วมใช่ไหม? ที่นั่งของคุณจะถูกคืนให้คนอื่น")) return;
+
+    const event = getEventById(eventId);
+    const user = getCurrentUser();
+    event.joined = event.joined - 1;
+    user.joined = user.joined.filter(id => id !== event.id);
+    updateEvent(event);
+    updateCurrentUser(user);
+
+    showToast("ยกเลิกการเข้าร่วมแล้ว");
+    showEvent();
+  });
+
+  // กด "บันทึกไว้" (กดซ้ำ = นำออก)
+  saveBtn.addEventListener("click", function () {
+    const user = getCurrentUser();
+    if (user.saved.includes(eventId)) {
+      user.saved = user.saved.filter(id => id !== eventId);
+      showToast("นำออกจากรายการแล้ว");
+    } else {
+      user.saved.push(eventId);
+      showToast("บันทึกกิจกรรมแล้ว");
+    }
+    updateCurrentUser(user);
+    showEvent();
+    saveBtn.classList.add("pop"); // ให้ไอคอนหัวใจเด้ง
+    setTimeout(() => saveBtn.classList.remove("pop"), 500);
+  });
+
+  // กด "เพิ่มลงปฏิทิน": สร้างไฟล์ .ics ให้ดาวน์โหลด (เปิดได้ใน Google Calendar / ปฏิทินมือถือ)
+  document.getElementById("calendarBtn").addEventListener("click", function () {
+    const event = getEventById(eventId);
+    const day = event.date.replaceAll("-", "");
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "BEGIN:VEVENT",
+      "UID:" + event.id + "@spu-event",
+      "DTSTART:" + day + "T" + event.start.replace(":", "") + "00",
+      "DTEND:" + day + "T" + event.end.replace(":", "") + "00",
+      "SUMMARY:" + event.title,
+      "LOCATION:" + event.place,
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ];
+    const file = new Blob([lines.join("\r\n")], { type: "text/calendar" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(file);
+    link.download = event.id + ".ics";
+    link.click();
+    showToast("ดาวน์โหลดไฟล์ปฏิทินแล้ว");
+  });
+
+  showEvent();
+</script>
+</body>
+</html>

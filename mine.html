@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ของฉัน · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="events.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
+    <nav class="nav">
+      <a href="events.html"><i class="icon icon-18 i-house"></i>กิจกรรม</a>
+      <a href="saved.html"><i class="icon icon-18 i-heart"></i>บันทึกไว้</a>
+      <a href="mine.html" class="on"><i class="icon icon-18 i-clip"></i>ของฉัน</a>
+      <a href="notifications.html"><i class="icon icon-18 i-bell"></i>แจ้งเตือน</a>
+      <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn outline sm create-btn" href="create.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="avatar" id="avatar" href="profile.html"></a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container rise">
+    <div class="page-head"><h1>ของฉัน</h1></div>
+
+    <!-- แท็บ 3 อัน -->
+    <div class="seg" id="tabs">
+      <button data-tab="up" class="on">กำลังจะมา</button>
+      <button data-tab="done">เข้าร่วมแล้ว</button>
+      <button data-tab="made">สร้างไว้</button>
+    </div>
+
+    <!-- รายการกิจกรรมของแท็บที่เลือก -->
+    <div id="content"></div>
+  </div>
+</main>
+
+<nav class="tabbar">
+  <a href="events.html"><i class="icon i-house"></i>กิจกรรม</a>
+  <a href="saved.html"><i class="icon i-heart"></i>บันทึกไว้</a>
+  <a href="mine.html" class="on"><i class="icon i-clip"></i>ของฉัน</a>
+  <a href="notifications.html"><i class="icon i-bell"></i>แจ้งเตือน</a>
+  <a href="profile.html"><i class="icon i-user"></i>โปรไฟล์</a>
+</nav>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้าของฉัน =====
+  const user = requireLogin();
+
+  // แท็บที่เลือก: "up" = กำลังจะมา, "done" = เข้าร่วมแล้ว, "made" = สร้างไว้
+  // ถ้าลิงก์เป็น mine.html?tab=made จะเปิดแท็บ "สร้างไว้" เลย
+  let tab = new URLSearchParams(location.search).get("tab") || "up";
+
+  // สร้าง HTML: ถ้ามีกิจกรรมแสดงเป็นการ์ด ถ้าไม่มีแสดงข้อความ
+  function listHTML(events, emptyText, buttonHTML) {
+    if (events.length === 0) {
+      return `<div class="empty box sm"><p class="muted">${emptyText}</p>${buttonHTML}</div>`;
+    }
+    return `<div class="grid rise">${events.map(e => cardHTML(e)).join("")}</div>`;
+  }
+
+  function showTab() {
+    // ไฮไลต์แท็บที่เลือก
+    document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+
+    const joinedEvents = user.joined.map(id => getEventById(id)).filter(e => e);
+    const upcoming = sortByDate(joinedEvents.filter(e => !isPast(e)));
+    const finished = sortByDate(joinedEvents.filter(e => isPast(e))).reverse();
+    const created = sortByDate(getEvents().filter(e => e.createdBy === user.email));
+
+    const findBtn = '<a class="btn primary" href="events.html">ค้นหากิจกรรม</a>';
+    const createBtn = '<a class="btn primary" href="create.html">สร้างกิจกรรม</a>';
+    let html = "";
+
+    if (tab === "up") {
+      html = listHTML(upcoming, "ยังไม่มีกิจกรรมที่กำลังจะมา", findBtn);
+      if (created.length > 0) {
+        html += '<h2 class="sub">กิจกรรมที่ฉันสร้าง</h2>' + listHTML(created);
+      }
+    } else if (tab === "done") {
+      html = listHTML(finished, "ยังไม่มีกิจกรรมที่เข้าร่วมไปแล้ว", findBtn);
+    } else {
+      html = listHTML(created, "ยังไม่ได้สร้างกิจกรรม", createBtn);
+    }
+
+    document.getElementById("content").innerHTML = html;
+  }
+
+  // กดเปลี่ยนแท็บ
+  document.querySelectorAll("#tabs button").forEach(function (button) {
+    button.addEventListener("click", function () {
+      tab = button.dataset.tab;
+      showTab();
+    });
+  });
+
+  showTab();
+</script>
+</body>
+</html>

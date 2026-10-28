@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>โปรไฟล์ · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="events.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
+    <nav class="nav">
+      <a href="events.html"><i class="icon icon-18 i-house"></i>กิจกรรม</a>
+      <a href="saved.html"><i class="icon icon-18 i-heart"></i>บันทึกไว้</a>
+      <a href="mine.html"><i class="icon icon-18 i-clip"></i>ของฉัน</a>
+      <a href="notifications.html"><i class="icon icon-18 i-bell"></i>แจ้งเตือน</a>
+      <a href="profile.html" class="on"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn outline sm create-btn" href="create.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="avatar" id="avatar" href="profile.html"></a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container profile">
+    <!-- คอลัมน์ซ้าย: บัตรนักศึกษา สถิติ ปุ่มออกจากระบบ -->
+    <div class="col rise">
+      <div class="box id-card">
+        <div class="avatar xl" id="bigAvatar"></div>
+        <h2 id="fullName"></h2>
+        <p class="muted" id="idLine"></p>
+      </div>
+      <div class="box stats">
+        <div><b id="statJoined">0</b><small>เข้าร่วม</small></div>
+        <div><b id="statSaved">0</b><small>บันทึกไว้</small></div>
+        <div><b id="statCreated">0</b><small>สร้างไว้</small></div>
+      </div>
+      <button class="btn ghost block" id="logoutBtn">ออกจากระบบ</button>
+      <button class="btn danger-outline block" id="deleteBtn">ลบบัญชี</button>
+    </div>
+
+    <!-- คอลัมน์ขวา: แก้ไขโปรไฟล์ และความเป็นส่วนตัว -->
+    <div class="col rise">
+      <form class="box stack" id="profileForm" novalidate>
+        <h3>แก้ไขโปรไฟล์</h3>
+        <p class="form-err" role="alert" hidden></p>
+        <div class="two">
+          <label class="field"><span>ชื่อ</span><input name="first" type="text"></label>
+          <label class="field"><span>นามสกุล</span><input name="last" type="text"></label>
+        </div>
+        <label class="field"><span>รหัสนักศึกษา</span><input name="studentId" type="text" inputmode="numeric" maxlength="8"></label>
+        <div class="two">
+          <label class="field">
+            <span>คณะ/สาขา</span>
+            <select name="faculty">
+              <option>คณะบริหารธุรกิจ</option>
+              <option>คณะบัญชี</option>
+              <option>คณะนิเทศศาสตร์</option>
+              <option>คณะเทคโนโลยีสารสนเทศ</option>
+              <option>คณะวิศวกรรมศาสตร์</option>
+              <option>คณะนิติศาสตร์</option>
+              <option>คณะศิลปศาสตร์</option>
+              <option>วิทยาลัยการบินนานาชาติ</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>ชั้นปี</span>
+            <select name="year">
+              <option>ปี 1</option>
+              <option>ปี 2</option>
+              <option>ปี 3</option>
+              <option>ปี 4</option>
+              <option>ปี 5 ขึ้นไป</option>
+            </select>
+          </label>
+        </div>
+        <button class="btn primary block">บันทึก</button>
+      </form>
+
+      <div class="box stack">
+        <h3>ความเป็นส่วนตัว</h3>
+        <label class="check"><input type="checkbox" id="showName"> แสดงชื่อและคณะต่อผู้จัดกิจกรรม</label>
+        <label class="check"><input type="checkbox" id="notify"> รับการแจ้งเตือนกิจกรรม</label>
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="tabbar">
+  <a href="events.html"><i class="icon i-house"></i>กิจกรรม</a>
+  <a href="saved.html"><i class="icon i-heart"></i>บันทึกไว้</a>
+  <a href="mine.html"><i class="icon i-clip"></i>ของฉัน</a>
+  <a href="notifications.html"><i class="icon i-bell"></i>แจ้งเตือน</a>
+  <a href="profile.html" class="on"><i class="icon i-user"></i>โปรไฟล์</a>
+</nav>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้าโปรไฟล์ =====
+  requireLogin();
+  const form = document.getElementById("profileForm");
+  const f = form.elements;
+
+  // แสดงข้อมูลผู้ใช้ในหน้า
+  function showProfile() {
+    const user = getCurrentUser();
+    document.getElementById("avatar").textContent = user.first[0];
+    document.getElementById("bigAvatar").textContent = user.first[0];
+    document.getElementById("fullName").textContent = user.first + " " + user.last;
+    document.getElementById("idLine").textContent = user.studentId + " · " + user.faculty;
+    document.getElementById("statJoined").textContent = user.joined.length;
+    document.getElementById("statSaved").textContent = user.saved.length;
+    document.getElementById("statCreated").textContent = getEvents().filter(e => e.createdBy === user.email).length;
+  }
+
+  // ใส่ค่าเดิมลงในฟอร์ม
+  const user = getCurrentUser();
+  f.first.value = user.first;
+  f.last.value = user.last;
+  f.studentId.value = user.studentId;
+  f.faculty.value = user.faculty;
+  f.year.value = user.year;
+  document.getElementById("showName").checked = user.showName;
+  document.getElementById("notify").checked = user.notify;
+  showProfile();
+
+  // กด "บันทึก"
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const first = f.first.value.trim();
+    const last = f.last.value.trim();
+    const studentId = f.studentId.value.trim();
+
+    if (first === "" || last === "") {
+      showFormError(form, "กรุณากรอกชื่อและนามสกุล");
+      return;
+    }
+    if (!/^\d{8}$/.test(studentId)) {
+      showFormError(form, "รหัสนักศึกษาต้องเป็นตัวเลข 8 หลัก");
+      return;
+    }
+
+    const user = getCurrentUser();
+    user.first = first;
+    user.last = last;
+    user.studentId = studentId;
+    user.faculty = f.faculty.value;
+    user.year = f.year.value;
+    updateCurrentUser(user);
+
+    showProfile();
+    showToast("บันทึกโปรไฟล์แล้ว");
+  });
+  form.addEventListener("input", () => hideFormError(form));
+
+  // ติ๊กตั้งค่าความเป็นส่วนตัว (บันทึกทันที)
+  ["showName", "notify"].forEach(function (key) {
+    document.getElementById(key).addEventListener("change", function () {
+      const user = getCurrentUser();
+      user[key] = this.checked;
+      updateCurrentUser(user);
+      showToast("บันทึกการตั้งค่าแล้ว");
+    });
+  });
+
+  // ออกจากระบบ
+  document.getElementById("logoutBtn").addEventListener("click", function () {
+    if (!confirm("คุณต้องการออกจากระบบใช่ไหม?")) return;
+    logout();
+    location.href = "index.html";
+  });
+
+  // ลบบัญชี: ลบผู้ใช้ และกิจกรรมที่ผู้ใช้สร้างไว้
+  document.getElementById("deleteBtn").addEventListener("click", function () {
+    if (!confirm("ลบบัญชีใช่ไหม? ข้อมูลทั้งหมดจะถูกลบและกู้คืนไม่ได้")) return;
+    const user = getCurrentUser();
+
+    // คืนที่นั่งของกิจกรรมที่เคยเข้าร่วม และลบกิจกรรมที่สร้างไว้
+    const events = getEvents()
+      .map(function (e) {
+        if (user.joined.includes(e.id)) e.joined = e.joined - 1;
+        return e;
+      })
+      .filter(e => e.createdBy !== user.email);
+    saveEvents(events);
+    saveUsers(getUsers().filter(u => u.email !== user.email));
+
+    logout();
+    location.href = "index.html";
+  });
+</script>
+</body>
+</html>

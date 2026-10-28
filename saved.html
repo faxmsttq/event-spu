@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>บันทึกไว้ · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="events.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
+    <nav class="nav">
+      <a href="events.html"><i class="icon icon-18 i-house"></i>กิจกรรม</a>
+      <a href="saved.html" class="on"><i class="icon icon-18 i-heart"></i>บันทึกไว้</a>
+      <a href="mine.html"><i class="icon icon-18 i-clip"></i>ของฉัน</a>
+      <a href="notifications.html"><i class="icon icon-18 i-bell"></i>แจ้งเตือน</a>
+      <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn outline sm create-btn" href="create.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="avatar" id="avatar" href="profile.html"></a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container rise">
+    <div class="page-head">
+      <div>
+        <h1>บันทึกไว้</h1>
+        <p class="muted" id="subtitle">กิจกรรมที่คุณกดบันทึกไว้ดูทีหลัง</p>
+      </div>
+      <b id="count"></b>
+    </div>
+
+    <div class="grid rise" id="list"></div>
+
+    <!-- แสดงเมื่อยังไม่มีกิจกรรมที่บันทึก -->
+    <div class="empty box" id="empty" hidden>
+      <div class="empty-ic"><i class="icon icon-38 i-heart"></i></div>
+      <h3>ยังไม่มีกิจกรรมที่บันทึกไว้</h3>
+      <p class="muted">กดบันทึกกิจกรรมที่สนใจ แล้วกลับมาดูที่นี่ได้เลย</p>
+      <a class="btn primary" href="events.html">ค้นหากิจกรรม</a>
+    </div>
+  </div>
+</main>
+
+<nav class="tabbar">
+  <a href="events.html"><i class="icon i-house"></i>กิจกรรม</a>
+  <a href="saved.html" class="on"><i class="icon i-heart"></i>บันทึกไว้</a>
+  <a href="mine.html"><i class="icon i-clip"></i>ของฉัน</a>
+  <a href="notifications.html"><i class="icon i-bell"></i>แจ้งเตือน</a>
+  <a href="profile.html"><i class="icon i-user"></i>โปรไฟล์</a>
+</nav>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้าบันทึกไว้ =====
+  requireLogin();
+
+  function showSaved() {
+    const user = getCurrentUser();
+
+    // แปลง id ที่บันทึกไว้ → ข้อมูลกิจกรรม (ข้ามอันที่ถูกลบไปแล้ว)
+    const events = user.saved.map(id => getEventById(id)).filter(e => e);
+    sortByDate(events);
+
+    // ใต้การ์ดแต่ละใบมีปุ่ม "นำออกจากรายการ"
+    document.getElementById("list").innerHTML = events.map(e =>
+      cardHTML(e, `<button class="link-btn" onclick="removeSaved('${e.id}')">นำออกจากรายการ</button>`)
+    ).join("");
+
+    document.getElementById("count").textContent = events.length + " กิจกรรม";
+    const isEmpty = events.length === 0;
+    document.getElementById("empty").hidden = !isEmpty;
+    document.getElementById("count").hidden = isEmpty;
+    document.getElementById("subtitle").hidden = isEmpty;
+  }
+
+  function removeSaved(eventId) {
+    const user = getCurrentUser();
+    user.saved = user.saved.filter(id => id !== eventId);
+    updateCurrentUser(user);
+    showToast("นำออกจากรายการแล้ว");
+    showSaved();
+  }
+
+  showSaved();
+</script>
+</body>
+</html>

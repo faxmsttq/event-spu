@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สมัครสมาชิก · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth">
+  <aside class="auth-side">
+    <div class="rise">
+      <a class="brand dark" href="index.html"><i class="icon icon-28 i-cal"></i>SPU EVENT</a>
+      <h1>สร้างบัญชีใน 1 นาที</h1>
+      <ul class="checks">
+        <li><i class="icon i-check"></i>ใช้อีเมลมหาวิทยาลัยยืนยันตัวตน</li>
+        <li><i class="icon i-check"></i>สมัครกิจกรรมได้ทันที</li>
+        <li><i class="icon i-check"></i>สร้างกิจกรรมของคุณเองได้</li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="auth-main">
+    <div class="auth-form">
+      <form id="signupForm" class="stack rise" novalidate>
+        <h2>สมัครสมาชิก</h2>
+        <p class="form-err" role="alert" hidden></p>
+        <div class="two">
+          <label class="field"><span>ชื่อ</span><input name="first" type="text" autocomplete="given-name"></label>
+          <label class="field"><span>นามสกุล</span><input name="last" type="text" autocomplete="family-name"></label>
+        </div>
+        <label class="field">
+          <span>รหัสนักศึกษา</span>
+          <input name="studentId" type="text" inputmode="numeric" maxlength="8" placeholder="ตัวเลข 8 หลัก">
+        </label>
+        <div class="two">
+          <label class="field">
+            <span>คณะ/สาขา</span>
+            <select name="faculty">
+              <option>คณะบริหารธุรกิจ</option>
+              <option>คณะบัญชี</option>
+              <option selected>คณะนิเทศศาสตร์</option>
+              <option>คณะเทคโนโลยีสารสนเทศ</option>
+              <option>คณะวิศวกรรมศาสตร์</option>
+              <option>คณะนิติศาสตร์</option>
+              <option>คณะศิลปศาสตร์</option>
+              <option>วิทยาลัยการบินนานาชาติ</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>ชั้นปี</span>
+            <select name="year">
+              <option>ปี 1</option>
+              <option selected>ปี 2</option>
+              <option>ปี 3</option>
+              <option>ปี 4</option>
+              <option>ปี 5 ขึ้นไป</option>
+            </select>
+          </label>
+        </div>
+        <label class="field">
+          <span>อีเมลมหาวิทยาลัย</span>
+          <input name="email" type="email" placeholder="name@spumail.net" autocomplete="email">
+        </label>
+        <label class="field">
+          <span>รหัสผ่าน (อย่างน้อย 8 ตัว)</span>
+          <input name="password" type="password" autocomplete="new-password">
+        </label>
+        <label class="field">
+          <span>ยืนยันรหัสผ่าน</span>
+          <input name="confirm" type="password" autocomplete="new-password">
+        </label>
+        <label class="check"><input type="checkbox" name="terms"> ฉันยอมรับข้อกำหนดและนโยบายความเป็นส่วนตัว</label>
+        <button class="btn primary block lg">สมัครสมาชิก</button>
+        <p class="muted">มีบัญชีอยู่แล้ว? <a class="link strong" href="login.html">เข้าสู่ระบบ</a></p>
+      </form>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้าสมัครสมาชิก =====
+  const form = document.getElementById("signupForm");
+
+  // ตรวจข้อมูลที่กรอก ถ้าผิดจะคืนข้อความ error ถ้าถูกหมดจะคืน "" (ว่าง)
+  function checkForm(data) {
+    if (data.first === "" || data.last === "") return "กรุณากรอกชื่อและนามสกุล";
+    if (!/^\d{8}$/.test(data.studentId)) return "รหัสนักศึกษาต้องเป็นตัวเลข 8 หลัก";
+    if (!data.email.endsWith("@spumail.net")) return "กรุณาใช้อีเมลมหาวิทยาลัย (@spumail.net)";
+    if (getUsers().some(u => u.email === data.email)) return "อีเมลนี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบแทน";
+    if (data.password.length < 8) return "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร";
+    if (data.password !== data.confirm) return "ยืนยันรหัสผ่านไม่ตรงกัน";
+    if (!data.terms) return "กรุณายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัว";
+    return "";
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    // อ่านค่าจากทุกช่อง
+    const f = form.elements;
+    const data = {
+      first: f.first.value.trim(),
+      last: f.last.value.trim(),
+      studentId: f.studentId.value.trim(),
+      faculty: f.faculty.value,
+      year: f.year.value,
+      email: f.email.value.trim().toLowerCase(),
+      password: f.password.value,
+      confirm: f.confirm.value,
+      terms: f.terms.checked
+    };
+
+    const error = checkForm(data);
+    if (error !== "") {
+      showFormError(form, error);
+      return;
+    }
+
+    // สร้างบัญชีใหม่แล้วบันทึก
+    const newUser = {
+      email: data.email, password: data.password,
+      first: data.first, last: data.last, studentId: data.studentId,
+      faculty: data.faculty, year: data.year,
+      showName: true, notify: true, saved: [], joined: []
+    };
+    const users = getUsers();
+    users.push(newUser);
+    saveUsers(users);
+
+    login(newUser.email);
+    toastOnNextPage("สมัครสมาชิกสำเร็จ ยินดีต้อนรับ " + newUser.first);
+    location.href = "events.html";
+  });
+
+  form.addEventListener("input", () => hideFormError(form));
+</script>
+</body>
+</html>

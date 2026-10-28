@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ลืมรหัสผ่าน · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth">
+  <aside class="auth-side">
+    <div class="rise">
+      <a class="brand dark" href="index.html"><i class="icon icon-28 i-cal"></i>SPU EVENT</a>
+      <h1>ลืมรหัสผ่าน?</h1>
+      <ul class="checks">
+        <li><i class="icon i-check"></i>กรอกอีเมลที่ใช้สมัคร</li>
+        <li><i class="icon i-check"></i>รับลิงก์ตั้งรหัสผ่านใหม่ทางอีเมล</li>
+        <li><i class="icon i-check"></i>กลับมาเข้าสู่ระบบได้ทันที</li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="auth-main">
+    <div class="auth-form">
+      <form id="forgotForm" class="stack rise" novalidate>
+        <div>
+          <h2>ตั้งรหัสผ่านใหม่</h2>
+          <p class="muted">เราจะส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลของคุณ</p>
+        </div>
+        <p class="form-err" role="alert" hidden></p>
+        <label class="field">
+          <span>อีเมลมหาวิทยาลัย</span>
+          <input name="email" type="email" placeholder="name@spumail.net" autocomplete="email">
+        </label>
+        <button class="btn primary block lg">ส่งลิงก์</button>
+        <a class="link fit" href="login.html">← กลับไปหน้าเข้าสู่ระบบ</a>
+      </form>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้าลืมรหัสผ่าน =====
+  // ยังไม่มีหลังบ้าน จึงส่งอีเมลจริงไม่ได้ ตอนนี้แค่ตรวจว่ามีบัญชีนี้อยู่จริง
+  const form = document.getElementById("forgotForm");
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const email = form.elements.email.value.trim().toLowerCase();
+
+    if (!email.endsWith("@spumail.net")) {
+      showFormError(form, "กรุณาใช้อีเมลมหาวิทยาลัย (@spumail.net)");
+      return;
+    }
+    if (!getUsers().some(u => u.email === email)) {
+      showFormError(form, "ไม่พบบัญชีที่ใช้อีเมลนี้");
+      return;
+    }
+
+    toastOnNextPage("ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลแล้ว (ตัวอย่าง)");
+    location.href = "login.html";
+  });
+
+  form.addEventListener("input", () => hideFormError(form));
+</script>
+</body>
+</html>

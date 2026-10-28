@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>กิจกรรม · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- แถบเมนูด้านบน -->
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="events.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
+    <nav class="nav">
+      <a href="events.html" class="on"><i class="icon icon-18 i-house"></i>กิจกรรม</a>
+      <a href="saved.html"><i class="icon icon-18 i-heart"></i>บันทึกไว้</a>
+      <a href="mine.html"><i class="icon icon-18 i-clip"></i>ของฉัน</a>
+      <a href="notifications.html"><i class="icon icon-18 i-bell"></i>แจ้งเตือน</a>
+      <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn outline sm create-btn" href="create.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="avatar" id="avatar" href="profile.html"></a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container rise">
+    <div class="greet">
+      <small class="muted" id="hello">สวัสดี</small>
+      <h1>สนใจทำกิจกรรมอะไรดี?</h1>
+    </div>
+
+    <label class="search">
+      <i class="icon i-search"></i>
+      <input id="search" type="search" placeholder="ค้นหากิจกรรมที่สนใจ">
+    </label>
+
+    <div class="filters">
+      <div class="chips" id="catChips">
+        <button class="chip on" data-cat="">ทั้งหมด</button>
+        <button class="chip" data-cat="วิชาการ">วิชาการ</button>
+        <button class="chip" data-cat="ความบันเทิง">ความบันเทิง</button>
+        <button class="chip" data-cat="กีฬา">กีฬา</button>
+        <button class="chip" data-cat="จิตอาสา">จิตอาสา</button>
+      </div>
+      <button class="chip" id="openOnlyBtn">เฉพาะที่เปิดรับ</button>
+    </div>
+
+    <div class="list-head">
+      <b id="count">พบ 0 กิจกรรม</b>
+      <button class="link-btn" id="sortBtn">วันที่ใกล้สุด ⌄</button>
+    </div>
+
+    <!-- การ์ดกิจกรรมจะถูกใส่ตรงนี้ด้วย JavaScript -->
+    <div class="grid rise" id="list"></div>
+
+    <div class="empty box" id="empty" hidden>
+      <div class="empty-ic"><i class="icon icon-38 i-search"></i></div>
+      <h3>ไม่พบกิจกรรมที่ตรงกับการค้นหา</h3>
+      <p class="muted">ลองเปลี่ยนคำค้นหา หรือล้างตัวกรอง</p>
+      <button class="btn outline" id="clearBtn">ล้างตัวกรอง</button>
+    </div>
+  </div>
+</main>
+
+<!-- เมนูด้านล่าง (แสดงเฉพาะบนมือถือ) -->
+<nav class="tabbar">
+  <a href="events.html" class="on"><i class="icon i-house"></i>กิจกรรม</a>
+  <a href="saved.html"><i class="icon i-heart"></i>บันทึกไว้</a>
+  <a href="mine.html"><i class="icon i-clip"></i>ของฉัน</a>
+  <a href="notifications.html"><i class="icon i-bell"></i>แจ้งเตือน</a>
+  <a href="profile.html"><i class="icon i-user"></i>โปรไฟล์</a>
+</nav>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้ากิจกรรม: ค้นหา กรอง และเรียงลำดับ =====
+  const user = requireLogin();
+  document.getElementById("hello").textContent = "สวัสดี " + user.first;
+
+  // ตัวกรองที่เลือกอยู่ตอนนี้
+  let keyword = "";        // คำค้นหา
+  let category = "";       // หมวดหมู่ ("" = ทั้งหมด)
+  let openOnly = false;    // แสดงเฉพาะที่เปิดรับสมัคร
+  let nearestFirst = true; // เรียงวันที่ใกล้สุดก่อน
+
+  function showEvents() {
+    // เอาเฉพาะกิจกรรมที่ผ่านการตรวจแล้วและยังไม่จบ
+    let events = getEvents().filter(e => e.status !== "pending" && !isPast(e));
+
+    if (category !== "") {
+      events = events.filter(e => e.cat === category);
+    }
+    if (openOnly) {
+      events = events.filter(e => isOpen(e));
+    }
+    if (keyword !== "") {
+      events = events.filter(e => (e.title + " " + e.place + " " + e.organizer).toLowerCase().includes(keyword));
+    }
+
+    sortByDate(events);
+    if (!nearestFirst) events.reverse();
+
+    document.getElementById("count").textContent = "พบ " + events.length + " กิจกรรม";
+    document.getElementById("list").innerHTML = events.map(e => cardHTML(e)).join("");
+    document.getElementById("empty").hidden = events.length > 0;
+  }
+
+  // พิมพ์ค้นหา
+  document.getElementById("search").addEventListener("input", function () {
+    keyword = this.value.trim().toLowerCase();
+    showEvents();
+  });
+
+  // กดเลือกหมวดหมู่
+  document.querySelectorAll("#catChips .chip").forEach(function (chip) {
+    chip.addEventListener("click", function () {
+      document.querySelectorAll("#catChips .chip").forEach(c => c.classList.remove("on"));
+      chip.classList.add("on");
+      category = chip.dataset.cat;
+      showEvents();
+    });
+  });
+
+  // กด "เฉพาะที่เปิดรับ"
+  const openOnlyBtn = document.getElementById("openOnlyBtn");
+  openOnlyBtn.addEventListener("click", function () {
+    openOnly = !openOnly;
+    openOnlyBtn.classList.toggle("on", openOnly);
+    showEvents();
+  });
+
+  // กดสลับการเรียงวันที่
+  const sortBtn = document.getElementById("sortBtn");
+  sortBtn.addEventListener("click", function () {
+    nearestFirst = !nearestFirst;
+    sortBtn.textContent = nearestFirst ? "วันที่ใกล้สุด ⌄" : "วันที่ไกลสุด ⌄";
+    showEvents();
+  });
+
+  // กด "ล้างตัวกรอง"
+  document.getElementById("clearBtn").addEventListener("click", function () {
+    keyword = "";
+    category = "";
+    openOnly = false;
+    document.getElementById("search").value = "";
+    document.querySelectorAll("#catChips .chip").forEach(c => c.classList.toggle("on", c.dataset.cat === ""));
+    openOnlyBtn.classList.remove("on");
+    showEvents();
+  });
+
+  showEvents();
+</script>
+</body>
+</html>

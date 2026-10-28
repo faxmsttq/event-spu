@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แจ้งเตือน · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="events.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
+    <nav class="nav">
+      <a href="events.html"><i class="icon icon-18 i-house"></i>กิจกรรม</a>
+      <a href="saved.html"><i class="icon icon-18 i-heart"></i>บันทึกไว้</a>
+      <a href="mine.html"><i class="icon icon-18 i-clip"></i>ของฉัน</a>
+      <a href="notifications.html" class="on"><i class="icon icon-18 i-bell"></i>แจ้งเตือน</a>
+      <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn outline sm create-btn" href="create.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="avatar" id="avatar" href="profile.html"></a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container narrow">
+    <div class="page-head"><h1>แจ้งเตือน</h1></div>
+    <div class="stack rise" id="list"></div>
+  </div>
+</main>
+
+<nav class="tabbar">
+  <a href="events.html"><i class="icon i-house"></i>กิจกรรม</a>
+  <a href="saved.html"><i class="icon i-heart"></i>บันทึกไว้</a>
+  <a href="mine.html"><i class="icon i-clip"></i>ของฉัน</a>
+  <a href="notifications.html" class="on"><i class="icon i-bell"></i>แจ้งเตือน</a>
+  <a href="profile.html"><i class="icon i-user"></i>โปรไฟล์</a>
+</nav>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้าแจ้งเตือน =====
+  // สร้างแจ้งเตือนจากข้อมูลที่มี: กิจกรรมที่ใกล้ถึง และกิจกรรมที่สร้างไว้ซึ่งรอตรวจสอบ
+  const user = requireLogin();
+  const notifications = [];
+
+  // 1) เตือนกิจกรรมที่เข้าร่วมและยังไม่ถึงวัน (ถ้าเปิดรับการแจ้งเตือนไว้)
+  if (user.notify) {
+    const upcoming = sortByDate(user.joined.map(id => getEventById(id)).filter(e => e && !isPast(e)));
+    upcoming.forEach(function (event) {
+      const daysLeft = Math.round((new Date(event.date) - new Date(today())) / (1000 * 60 * 60 * 24));
+      notifications.push({
+        icon: "i-bell",
+        title: daysLeft === 0 ? "กิจกรรมเริ่มวันนี้" : "อีก " + daysLeft + " วันถึงกิจกรรม",
+        text: event.title + " · " + thaiDate(event.date) + " " + event.start + " น.",
+        link: "event.html?id=" + event.id
+      });
+    });
+  }
+
+  // 2) กิจกรรมที่เราสร้างและยังรอตรวจสอบ
+  getEvents().filter(e => e.createdBy === user.email && e.status === "pending").forEach(function (event) {
+    notifications.push({
+      icon: "i-clip",
+      title: "กิจกรรมของคุณรอตรวจสอบ",
+      text: event.title + " · ผู้ดูแลจะแจ้งผลภายใน 1-2 วันทำการ",
+      link: "event.html?id=" + event.id
+    });
+  });
+
+  // 3) ข้อความต้อนรับ
+  notifications.push({
+    icon: "i-sparkle",
+    title: "ยินดีต้อนรับสู่ SPU Event",
+    text: "ค้นหากิจกรรมที่สนใจ แล้วกดเข้าร่วมได้เลย",
+    link: "events.html"
+  });
+
+  // แสดงผล
+  document.getElementById("list").innerHTML = notifications.map(n => `
+    <a class="notif box" href="${n.link}">
+      <span class="notif-ic"><i class="icon ${n.icon}"></i></span>
+      <div><b>${safe(n.title)}</b><p class="muted">${safe(n.text)}</p></div>
+    </a>`).join("");
+</script>
+</body>
+</html>

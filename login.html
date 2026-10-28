@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เข้าสู่ระบบ · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth">
+  <!-- ฝั่งซ้ายสีชมพู -->
+  <aside class="auth-side">
+    <div class="rise">
+      <a class="brand dark" href="index.html"><i class="icon icon-28 i-cal"></i>SPU EVENT</a>
+      <h1>ยินดีต้อนรับกลับมา</h1>
+      <ul class="checks">
+        <li><i class="icon i-check"></i>ดูกิจกรรมที่คุณสนใจ</li>
+        <li><i class="icon i-check"></i>เก็บกิจกรรมที่บันทึกไว้</li>
+        <li><i class="icon i-check"></i>ติดตามสถานะการสมัคร</li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- ฝั่งขวา: ฟอร์ม -->
+  <main class="auth-main">
+    <div class="auth-form">
+      <form id="loginForm" class="stack rise" novalidate>
+        <div>
+          <h2>เข้าสู่ระบบ</h2>
+          <p class="muted">ใช้อีเมลมหาวิทยาลัยของคุณ</p>
+        </div>
+        <p class="form-err" role="alert" hidden></p>
+        <label class="field">
+          <span>อีเมลมหาวิทยาลัย</span>
+          <input name="email" type="email" placeholder="name@spumail.net" autocomplete="email">
+        </label>
+        <label class="field">
+          <span>รหัสผ่าน</span>
+          <input name="password" type="password" autocomplete="current-password">
+        </label>
+        <a class="link fit" href="forgot.html">ลืมรหัสผ่าน?</a>
+        <button class="btn primary block lg">เข้าสู่ระบบ</button>
+        <button type="button" class="btn ghost block" id="demoBtn">ลองใช้บัญชีตัวอย่าง</button>
+        <p class="muted">ยังไม่มีบัญชี? <a class="link strong" href="signup.html">สมัครสมาชิก</a></p>
+      </form>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้าเข้าสู่ระบบ =====
+  const form = document.getElementById("loginForm");
+
+  // เมื่อกดปุ่ม "เข้าสู่ระบบ"
+  form.addEventListener("submit", function (e) {
+    e.preventDefault(); // ไม่ให้เบราว์เซอร์โหลดหน้าใหม่เอง
+
+    const email = form.elements.email.value.trim().toLowerCase();
+    const password = form.elements.password.value;
+
+    if (email === "" || password === "") {
+      showFormError(form, "กรุณากรอกอีเมลและรหัสผ่าน");
+      return;
+    }
+
+    // หาบัญชีที่อีเมลและรหัสผ่านตรงกัน
+    const user = getUsers().find(u => u.email === email && u.password === password);
+    if (!user) {
+      showFormError(form, "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      return;
+    }
+
+    login(user.email);
+    toastOnNextPage("ยินดีต้อนรับ " + user.first);
+    location.href = "events.html";
+  });
+
+  // ปุ่ม "ลองใช้บัญชีตัวอย่าง": กรอกให้อัตโนมัติแล้วกดเข้าสู่ระบบ
+  document.getElementById("demoBtn").addEventListener("click", function () {
+    // ถ้าบัญชีตัวอย่างเคยถูกลบไป ให้สร้างกลับมาใหม่
+    const users = getUsers();
+    if (!users.some(u => u.email === SAMPLE_USER.email)) {
+      users.push(SAMPLE_USER);
+      saveUsers(users);
+    }
+    form.elements.email.value = SAMPLE_USER.email;
+    form.elements.password.value = SAMPLE_USER.password;
+    form.requestSubmit();
+  });
+
+  // พิมพ์ใหม่แล้วซ่อนข้อความ error
+  form.addEventListener("input", () => hideFormError(form));
+</script>
+</body>
+</html>

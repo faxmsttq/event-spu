@@ -26,6 +26,12 @@ function today() {
   return addDays(0);
 }
 
+// เวลาตอนนี้ในรูปแบบ "14:05"
+function nowTime() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+
 // กิจกรรมตัวอย่าง (วันที่นับจากวันนี้ เพื่อให้มีกิจกรรมที่กำลังจะมาเสมอ)
 // organizer = เจ้าภาพที่จัด, contact... = ผู้ติดต่อ, formLink = ลิงก์แบบฟอร์มสมัคร
 const SAMPLE_EVENTS = [
@@ -166,6 +172,25 @@ const ADMIN_CONTACT = {
   place: "อาคาร 1 ชั้น 2 ห้องกิจการนักศึกษา"
 };
 
+// รายชื่อคณะ / วิทยาลัย (ใช้ในช่องเลือกคณะทุกหน้า: สมัครสมาชิก, โปรไฟล์, ยื่นคำขอ)
+// แก้ที่นี่ที่เดียว ทุกหน้าจะเปลี่ยนตาม
+const FACULTIES = [
+  "คณะการสร้างเจ้าของธุรกิจ",
+  "คณะดิจิทัลมีเดีย",
+  "คณะนิเทศศาสตร์",
+  "คณะบริหารธุรกิจ",
+  "คณะเทคโนโลยีสารสนเทศ",
+  "วิทยาลัยการบิน การท่องเที่ยวและการบริการ",
+  "วิทยาลัยโลจิสติกส์ การบิน และสมาร์ทโมบิลิตี้",
+  "คณะศิลปศาสตร์",
+  "คณะการออกแบบและสถาปัตยกรรมศาสตร์",
+  "คณะบัญชี",
+  "คณะนิติศาสตร์",
+  "Sripatum University International College",
+  "SPU The Global Design Academy",
+  "คณะวิศวกรรมศาสตร์"
+];
+
 // หมวดหมู่: สีของโปสเตอร์ (class ใน CSS) และไอคอน
 const CATEGORIES = {
   "วิชาการ": { color: "c-aca", icon: "i-pen" },
@@ -182,7 +207,16 @@ const CATEGORIES = {
 function loadData(key, defaultValue) {
   const text = localStorage.getItem(key);
   if (text === null) return defaultValue;
-  return JSON.parse(text);
+  // ถ้าข้อมูลเสีย (อ่านเป็น JSON ไม่ได้) ใช้ค่าเริ่มต้นแทน ไม่ให้ทั้งหน้าพัง
+  try {
+    const value = JSON.parse(text);
+    // ข้อมูลผิดรูปแบบ (เช่น ควรเป็นรายการแต่ไม่ใช่) ก็ใช้ค่าเริ่มต้นแทน
+    if (Array.isArray(defaultValue) && !Array.isArray(value)) return defaultValue;
+    return value;
+  } catch (error) {
+    console.warn("ข้อมูล " + key + " เสีย ใช้ค่าเริ่มต้นแทน", error);
+    return defaultValue;
+  }
 }
 
 function saveData(key, value) {
@@ -274,7 +308,10 @@ function eventTime(event) {
 }
 
 function seatsLeft(event) { return event.cap - event.joined; }
-function isPast(event) { return event.date < today(); }
+// จบแล้ว = วันที่ผ่านไปแล้ว หรือเป็นวันนี้แต่เลยเวลาสิ้นสุดแล้ว
+function isPast(event) {
+  return event.date < today() || (event.date === today() && event.end <= nowTime());
+}
 function isOpen(event) { return event.status === "open" && seatsLeft(event) > 0 && !isPast(event); }
 
 // เรียงจากวันที่ใกล้ไปไกล
@@ -284,8 +321,8 @@ function sortByDate(events) {
 
 // นับถอยหลัง: "วันนี้" / "พรุ่งนี้" / "อีก 5 วัน" (กิจกรรมที่จบแล้วคืนค่าว่าง)
 function daysLeftText(event) {
+  if (isPast(event)) return "";
   const days = Math.round((new Date(event.date) - new Date(today())) / (1000 * 60 * 60 * 24));
-  if (days < 0) return "";
   if (days === 0) return "วันนี้";
   if (days === 1) return "พรุ่งนี้";
   return "อีก " + days + " วัน";
@@ -341,6 +378,38 @@ function safe(text) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+// ลิงก์ที่ปลอดภัย: http(s):// หรือหน้าในเว็บนี้ เช่น "event.html?id=e2"
+// (กันลิงก์ "javascript:..." ที่รันโค้ดได้เมื่อมีคนกด)
+function isWebLink(link) {
+  return /^https?:\/\/\S+$/i.test(link);
+}
+function isSafeLink(link) {
+  return isWebLink(link) || /^[\w-]+\.html([?#]\S*)?$/i.test(link);
+}
+
+// อีเมลมหาวิทยาลัย ต้องมีชื่อข้างหน้า @spumail.net
+function isSpuEmail(email) {
+  return /^[a-z0-9._%+-]+@spumail\.net$/i.test(email);
+}
+
+// ตัวอักษรแรกของชื่อสำหรับวงกลมรูปโปรไฟล์ (ข้ามสระหน้า เ แ โ ใ ไ เช่น "เอกชัย" → "อ")
+function initialOf(name) {
+  const text = String(name || "").trim().replace(/^[เแโใไ]+/, "");
+  return text[0] || "?";
+}
+
+// ให้เบราว์เซอร์ดาวน์โหลดไฟล์ แล้วคืนหน่วยความจำ
+function downloadFile(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.replace(/[\\/:*?"<>|]+/g, "-"); // ตัวอักษรที่ใช้ในชื่อไฟล์ไม่ได้
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ป้ายสถานะ: เปิดรับสมัคร / ปิดรับสมัคร / จบแล้ว
@@ -443,8 +512,23 @@ function showAvatar(element, user) {
   if (user.photo) {
     element.innerHTML = `<img src="${user.photo}" alt="">`;
   } else {
-    element.textContent = user.first[0];
+    element.textContent = initialOf(user.first);
   }
+}
+
+// เติมรายชื่อคณะลงในทุก <select data-faculties> (ตัวเลือกที่มีอยู่แล้ว เช่น "เลือกคณะ" ยังอยู่ด้านบน)
+document.querySelectorAll("select[data-faculties]").forEach(function (select) {
+  FACULTIES.forEach(function (name) {
+    select.add(new Option(name, name));
+  });
+});
+
+// ตั้งค่าช่องเลือก ถ้าค่าเดิมไม่มีในรายการ (เช่น คณะชื่อเก่า) เพิ่มเป็นตัวเลือกให้ ข้อมูลเดิมจะได้ไม่หาย
+function setSelectValue(select, value) {
+  if (value && ![...select.options].some(o => o.value === value)) {
+    select.add(new Option(value, value));
+  }
+  select.value = value;
 }
 
 // วงกลมมุมขวาบนของทุกหน้า

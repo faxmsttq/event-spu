@@ -42,7 +42,10 @@
         </label>
         <a class="link fit" href="forgot.html">ลืมรหัสผ่าน?</a>
         <button class="btn primary block lg">เข้าสู่ระบบ</button>
-        <button type="button" class="btn ghost block" id="demoBtn">ลองใช้บัญชีตัวอย่าง</button>
+        <div class="two">
+          <button type="button" class="btn ghost block" id="demoBtn">ลองใช้บัญชีนักศึกษา</button>
+          <button type="button" class="btn ghost block" id="adminDemoBtn"><i class="icon icon-18 i-shield"></i>ลองใช้บัญชีแอดมิน</button>
+        </div>
         <p class="muted">ยังไม่มีบัญชี? <a class="link strong" href="signup.html">สมัครสมาชิก</a></p>
       </form>
     </div>
@@ -76,21 +79,24 @@
 
     login(user.email);
     toastOnNextPage("ยินดีต้อนรับ " + user.first);
-    location.href = "events.html";
+    // แอดมินไปหน้าจัดการระบบ นักศึกษาไปหน้ากิจกรรม
+    location.href = isAdmin(user) ? "admin.html" : "events.html";
   });
 
-  // ปุ่ม "ลองใช้บัญชีตัวอย่าง": กรอกให้อัตโนมัติแล้วกดเข้าสู่ระบบ
-  document.getElementById("demoBtn").addEventListener("click", function () {
+  // ปุ่ม "ลองใช้บัญชี...": กรอกให้อัตโนมัติแล้วกดเข้าสู่ระบบ
+  function useSampleAccount(account) {
     // ถ้าบัญชีตัวอย่างเคยถูกลบไป ให้สร้างกลับมาใหม่
     const users = getUsers();
-    if (!users.some(u => u.email === SAMPLE_USER.email)) {
-      users.push(SAMPLE_USER);
+    if (!users.some(u => u.email === account.email)) {
+      users.push(account);
       saveUsers(users);
     }
-    form.elements.email.value = SAMPLE_USER.email;
-    form.elements.password.value = SAMPLE_USER.password;
+    form.elements.email.value = account.email;
+    form.elements.password.value = account.password;
     form.requestSubmit();
-  });
+  }
+  document.getElementById("demoBtn").addEventListener("click", () => useSampleAccount(SAMPLE_USER));
+  document.getElementById("adminDemoBtn").addEventListener("click", () => useSampleAccount(SAMPLE_ADMIN));
 
   // พิมพ์ใหม่แล้วซ่อนข้อความ error
   form.addEventListener("input", () => hideFormError(form));

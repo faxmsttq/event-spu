@@ -20,7 +20,7 @@
       <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
     </nav>
     <div class="top-actions">
-      <a class="btn outline sm create-btn" href="create.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="btn outline sm create-btn" href="requests.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
       <a class="avatar" id="avatar" href="profile.html"></a>
     </div>
   </div>
@@ -45,7 +45,7 @@
 <script src="js/common.js"></script>
 <script>
   // ===== หน้าแจ้งเตือน =====
-  // สร้างแจ้งเตือนจากข้อมูลที่มี: กิจกรรมที่ใกล้ถึง และกิจกรรมที่สร้างไว้ซึ่งรอตรวจสอบ
+  // สร้างแจ้งเตือนจากข้อมูลที่มี: กิจกรรมที่ใกล้ถึง และสถานะคำขอจัดกิจกรรม
   const user = requireLogin();
   const notifications = [];
 
@@ -63,15 +63,29 @@
     });
   }
 
-  // 2) กิจกรรมที่เราสร้างและยังรอตรวจสอบ
-  getEvents().filter(e => e.createdBy === user.email && e.status === "pending").forEach(function (event) {
+  // 2) ความคืบหน้าของคำขอจัดกิจกรรมที่เรายื่นไว้
+  const REQUEST_MESSAGES = {
+    sending: "ส่งคำขอแล้ว รอคณะรับเรื่อง",
+    processing: "คณะรับเรื่องแล้ว กำลังพิจารณา",
+    approved: "ได้รับอนุมัติแล้ว ไปต่อหน้าสร้างกิจกรรมได้เลย",
+    rejected: "ไม่อนุมัติ กรุณาแก้ไขแล้วส่งใหม่"
+  };
+  getRequests().filter(r => r.createdBy === user.email && !r.eventId).forEach(function (r) {
     notifications.push({
-      icon: "i-clip",
-      title: "กิจกรรมของคุณรอตรวจสอบ",
-      text: event.title + " · ผู้ดูแลจะแจ้งผลภายใน 1-2 วันทำการ",
-      link: "event.html?id=" + event.id
+      icon: "i-send",
+      title: "คำขอ \"" + r.title + "\" · " + REQUEST_STATUS[r.status].text,
+      text: REQUEST_MESSAGES[r.status],
+      link: "requests.html"
     });
   });
+
+  // แอดมิน: เตือนคำขอที่ยังรอพิจารณา
+  if (isAdmin(user)) {
+    const waiting = getRequests().filter(r => r.status === "sending" || r.status === "processing").length;
+    if (waiting > 0) {
+      notifications.unshift({ icon: "i-shield", title: "มีคำขอรอพิจารณา " + waiting + " รายการ", text: "ไปที่หน้าจัดการระบบเพื่ออนุมัติหรือไม่อนุมัติ", link: "admin.html" });
+    }
+  }
 
   // 3) ข้อความต้อนรับ
   notifications.push({

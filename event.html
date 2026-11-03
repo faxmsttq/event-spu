@@ -20,7 +20,7 @@
       <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
     </nav>
     <div class="top-actions">
-      <a class="btn outline sm create-btn" href="create.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="btn outline sm create-btn" href="requests.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
       <a class="avatar" id="avatar" href="profile.html"></a>
     </div>
   </div>
@@ -53,9 +53,13 @@
         <div class="bar"><i id="bar"></i></div>
         <div class="side-acts">
           <button class="btn primary block lg" id="joinBtn">เข้าร่วมกิจกรรม</button>
+          <a class="btn outline block" id="formBtn" target="_blank" rel="noopener" hidden><i class="icon icon-18 i-link"></i> กรอกแบบฟอร์มสมัคร</a>
           <button class="link-btn danger-link" id="leaveBtn" hidden>ยกเลิกการเข้าร่วม</button>
           <button class="btn outline block" id="saveBtn"></button>
-          <button class="btn ghost block" id="calendarBtn"><i class="icon icon-18 i-cal"></i> เพิ่มลงปฏิทิน</button>
+          <div class="two">
+            <button class="btn ghost block" id="calendarBtn"><i class="icon icon-18 i-cal"></i> ลงปฏิทิน</button>
+            <button class="btn ghost block" id="shareBtn"><i class="icon icon-18 i-link"></i> แชร์ลิงก์</button>
+          </div>
         </div>
       </aside>
 
@@ -65,6 +69,29 @@
         <div class="two-cards">
           <div class="box"><h3>ผู้เข้าร่วม</h3><p class="muted" id="who"></p></div>
           <div class="box"><h3>สิ่งที่ต้องเตรียม</h3><p class="muted" id="bring"></p></div>
+        </div>
+
+        <!-- ติดต่อผู้จัดกิจกรรม -->
+        <div class="box contact">
+          <h3>ติดต่อผู้จัดกิจกรรม</h3>
+          <ul class="contact-list">
+            <li><i class="icon icon-18 i-shield"></i><span>เจ้าภาพ: <b id="host"></b></span></li>
+            <li><i class="icon icon-18 i-user"></i><span>ผู้ติดต่อ: <span id="contactName"></span></span></li>
+            <li id="phoneRow"><i class="icon icon-18 i-phone"></i><a id="contactPhone"></a></li>
+            <li id="emailRow"><i class="icon icon-18 i-mail"></i><span id="contactEmail"></span></li>
+          </ul>
+        </div>
+
+        <!-- เครื่องมือผู้จัด (เห็นเฉพาะเจ้าของกิจกรรม และแอดมิน) -->
+        <div class="box tools" id="tools" hidden>
+          <h3>เครื่องมือผู้จัด</h3>
+          <p class="muted" id="toolsSummary"></p>
+          <ul class="people" id="people"></ul>
+          <div class="tools-acts">
+            <button class="btn outline sm" id="csvBtn">ดาวน์โหลดรายชื่อ (Excel)</button>
+            <button class="btn ghost sm" id="toggleBtn"></button>
+            <button class="btn danger-outline sm" id="deleteBtn">ลบกิจกรรม</button>
+          </div>
         </div>
       </div>
     </div>
@@ -96,8 +123,8 @@
     const user = getCurrentUser();
     const event = getEventById(eventId);
 
-    // ไม่เจอกิจกรรม หรือเป็นกิจกรรมรอตรวจสอบของคนอื่น
-    if (!event || (event.status === "pending" && event.createdBy !== user.email)) {
+    // ไม่เจอกิจกรรม
+    if (!event) {
       document.getElementById("notFound").hidden = false;
       document.getElementById("detail").hidden = true;
       return;
@@ -115,6 +142,20 @@
     document.getElementById("bring").textContent = event.bring || "-";
     document.getElementById("joinedText").textContent = "เข้าร่วมแล้ว " + event.joined + "/" + event.cap;
     document.getElementById("badge").innerHTML = badgeHTML(event);
+
+    // ผู้ติดต่อ (ซ่อนแถวที่ไม่มีข้อมูล)
+    document.getElementById("host").textContent = event.organizer;
+    document.getElementById("contactName").textContent = event.contactName || "-";
+    document.getElementById("contactPhone").textContent = event.contactPhone;
+    document.getElementById("contactPhone").href = "tel:" + event.contactPhone;
+    document.getElementById("contactEmail").textContent = event.contactEmail;
+    document.getElementById("phoneRow").hidden = !event.contactPhone;
+    document.getElementById("emailRow").hidden = !event.contactEmail;
+
+    // ปุ่มแบบฟอร์มสมัคร (แสดงเมื่อผู้จัดแนบลิงก์ไว้)
+    const formBtn = document.getElementById("formBtn");
+    formBtn.href = event.formLink || "";
+    formBtn.hidden = !event.formLink;
 
     // แถบความคืบหน้า = จำนวนคนเข้าร่วม ÷ จำนวนที่รับ
     const percent = Math.min(100, Math.round(event.joined / event.cap * 100));
@@ -144,11 +185,92 @@
       ? '<i class="icon icon-18 i-heart-fill"></i> บันทึกแล้ว'
       : '<i class="icon icon-18 i-heart"></i> บันทึกไว้';
     saveBtn.classList.toggle("is-saved", saved);
+
+    // เครื่องมือผู้จัด: แสดงเฉพาะเจ้าของกิจกรรม หรือแอดมิน
+    const canManage = event.createdBy === user.email || isAdmin(user);
+    document.getElementById("tools").hidden = !canManage;
+    if (canManage) showTools(event);
   }
+
+  /* ---------- เครื่องมือผู้จัด ---------- */
+
+  // ผู้สมัครที่มีบัญชีในระบบ
+  function getParticipants(event) {
+    return getUsers().filter(u => u.joined.includes(event.id));
+  }
+
+  function showTools(event) {
+    const people = getParticipants(event);
+    let summary = "เข้าร่วมทั้งหมด " + event.joined + " คน";
+    if (event.joined > people.length) {
+      summary += " (สมัครผ่านบัญชีในระบบ " + people.length + " คน ที่เหลือเป็นข้อมูลตัวอย่าง)";
+    }
+    document.getElementById("toolsSummary").textContent = summary;
+
+    // รายชื่อ: ถ้าผู้สมัครปิด "แสดงชื่อและคณะต่อผู้จัด" จะไม่แสดงชื่อ
+    document.getElementById("people").innerHTML = people.map(function (u) {
+      if (!u.showName) return '<li><span class="avatar">?</span>ไม่เปิดเผยชื่อ</li>';
+      const pic = u.photo ? `<img src="${u.photo}" alt="">` : safe(u.first[0]);
+      return `<li><span class="avatar">${pic}</span>${safe(u.first + " " + u.last)} · <span class="muted">${safe(u.faculty)}</span></li>`;
+    }).join("") || '<li class="muted">ยังไม่มีผู้สมัครผ่านระบบ</li>';
+
+    // ปุ่มปิด/เปิดรับสมัคร (ซ่อนเมื่อกิจกรรมจบแล้ว)
+    const toggleBtn = document.getElementById("toggleBtn");
+    toggleBtn.textContent = event.status === "open" ? "ปิดรับสมัคร" : "เปิดรับสมัครอีกครั้ง";
+    toggleBtn.hidden = isPast(event);
+  }
+
+  // ดาวน์โหลดรายชื่อเป็นไฟล์ CSV (เปิดใน Excel / Google Sheets ได้)
+  document.getElementById("csvBtn").addEventListener("click", function () {
+    const event = getEventById(eventId);
+    const rows = [["ชื่อ", "นามสกุล", "รหัสนักศึกษา", "คณะ", "ชั้นปี", "อีเมล"]];
+    getParticipants(event).forEach(function (u) {
+      if (u.showName) rows.push([u.first, u.last, u.studentId, u.faculty, u.year, u.email]);
+      else rows.push(["ไม่เปิดเผย", "", "", "", "", u.email]);
+    });
+
+    // ใส่ "..." ครอบทุกช่อง กันเครื่องหมาย , ในข้อมูล
+    const text = rows.map(r => r.map(v => '"' + String(v).replaceAll('"', '""') + '"').join(",")).join("\r\n");
+    const file = new Blob(["﻿" + text], { type: "text/csv" }); // ﻿ ช่วยให้ Excel อ่านภาษาไทยถูก
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(file);
+    link.download = "รายชื่อ-" + event.title + ".csv";
+    link.click();
+    showToast("ดาวน์โหลดรายชื่อแล้ว");
+  });
+
+  // ปิด / เปิดรับสมัคร
+  document.getElementById("toggleBtn").addEventListener("click", function () {
+    const event = getEventById(eventId);
+    event.status = event.status === "open" ? "closed" : "open";
+    updateEvent(event);
+    showToast(event.status === "open" ? "เปิดรับสมัครแล้ว" : "ปิดรับสมัครแล้ว");
+    showEvent();
+  });
+
+  // ลบกิจกรรม
+  document.getElementById("deleteBtn").addEventListener("click", function () {
+    if (!confirm("ลบกิจกรรมนี้ใช่ไหม? ผู้ที่สมัครไว้จะถูกนำออกทั้งหมด")) return;
+    deleteEvent(eventId);
+    toastOnNextPage("ลบกิจกรรมแล้ว");
+    location.href = isAdmin(getCurrentUser()) ? "admin.html" : "mine.html?tab=made";
+  });
+
+  // แชร์ลิงก์: คัดลอกลิงก์หน้านี้ไว้ส่งให้เพื่อน
+  document.getElementById("shareBtn").addEventListener("click", function () {
+    navigator.clipboard.writeText(location.href)
+      .then(() => showToast("คัดลอกลิงก์แล้ว ส่งให้เพื่อนได้เลย"))
+      .catch(() => prompt("คัดลอกลิงก์นี้", location.href)); // บางเบราว์เซอร์ไม่อนุญาตให้คัดลอกอัตโนมัติ
+  });
 
   // กด "เข้าร่วมกิจกรรม"
   joinBtn.addEventListener("click", function () {
     const event = getEventById(eventId);
+    if (!isOpen(event)) {
+      showToast("กิจกรรมนี้ปิดรับสมัครแล้ว");
+      showEvent();
+      return;
+    }
     if (!confirm("ยืนยันเข้าร่วม \"" + event.title + "\" ใช่ไหม?")) return;
 
     const user = getCurrentUser();

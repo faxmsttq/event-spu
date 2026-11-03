@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>จัดการระบบ · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="events.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
+    <nav class="nav">
+      <a href="events.html"><i class="icon icon-18 i-house"></i>กิจกรรม</a>
+      <a href="saved.html"><i class="icon icon-18 i-heart"></i>บันทึกไว้</a>
+      <a href="mine.html"><i class="icon icon-18 i-clip"></i>ของฉัน</a>
+      <a href="notifications.html"><i class="icon icon-18 i-bell"></i>แจ้งเตือน</a>
+      <a href="profile.html" class="on"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn outline sm create-btn" href="requests.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="avatar" id="avatar" href="profile.html"></a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container narrow rise">
+    <div class="page-head">
+      <div>
+        <h1>จัดการระบบ</h1>
+        <p class="muted">สำหรับผู้ดูแลระบบ: พิจารณาคำขอแทนคณบดี จัดการกิจกรรม และประกาศหน้าหลัก</p>
+      </div>
+    </div>
+
+    <!-- ตัวเลขสรุปภาพรวมระบบ -->
+    <div class="stat-grid" id="stats"></div>
+
+    <div class="seg" id="tabs">
+      <button data-tab="requests" class="on">คำขอจัดกิจกรรม</button>
+      <button data-tab="events">กิจกรรม</button>
+      <button data-tab="news">ประกาศ</button>
+    </div>
+
+    <!-- แท็บ: กิจกรรมทั้งหมด -->
+    <section id="eventsTab" hidden>
+      <div class="stack rise" id="eventList"></div>
+    </section>
+
+    <!-- แท็บ 1: คำขอจัดกิจกรรม -->
+    <section id="requestsTab">
+      <div class="stack rise" id="requestList"></div>
+    </section>
+
+    <!-- แท็บ 2: ประกาศ / ประชาสัมพันธ์ -->
+    <section id="newsTab" hidden>
+      <form class="box stack" id="newsForm" novalidate>
+        <h3>เพิ่มประกาศ / ประชาสัมพันธ์</h3>
+        <p class="form-err" role="alert" hidden></p>
+        <div class="two">
+          <label class="field">
+            <span>ประเภท</span>
+            <select name="tag">
+              <option>ประกาศ</option>
+              <option>ประชาสัมพันธ์</option>
+              <option>ข่าวระบบ</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>สีโปสเตอร์</span>
+            <select name="color">
+              <option value="c-aca">ชมพู</option>
+              <option value="c-fun">ส้ม</option>
+              <option value="c-sport">ฟ้า</option>
+              <option value="c-vol">เขียว</option>
+            </select>
+          </label>
+        </div>
+        <label class="field"><span>หัวข้อ</span><input name="title" type="text" maxlength="60"></label>
+        <label class="field"><span>ข้อความสั้น (แสดงบนการ์ด)</span><input name="text" type="text" maxlength="100"></label>
+        <label class="field"><span>รายละเอียด (แสดงในหน้าดูรายละเอียด)</span><textarea name="detail" rows="5" maxlength="2000"></textarea></label>
+        <label class="field">
+          <span>ไฟล์โปสเตอร์ (ถ้ามี)</span>
+          <input name="image" type="file" accept="image/*">
+          <small class="muted">รองรับ JPG / PNG รูปจะถูกย่อให้เล็กลงอัตโนมัติ</small>
+        </label>
+        <img class="img-preview" id="imgPreview" alt="ตัวอย่างโปสเตอร์" hidden>
+        <label class="field"><span>ลิงก์ที่เกี่ยวข้อง (ถ้ามี)</span><input name="link" type="text" placeholder="เช่น event.html?id=e2 หรือ https://..."></label>
+        <button class="btn primary block"><i class="icon icon-18 i-megaphone"></i>เพิ่มประกาศ</button>
+      </form>
+
+      <h2 class="sub">ประกาศที่แสดงอยู่</h2>
+      <div class="grid" id="newsList"></div>
+    </section>
+  </div>
+</main>
+
+<nav class="tabbar">
+  <a href="events.html"><i class="icon i-house"></i>กิจกรรม</a>
+  <a href="saved.html"><i class="icon i-heart"></i>บันทึกไว้</a>
+  <a href="mine.html"><i class="icon i-clip"></i>ของฉัน</a>
+  <a href="notifications.html"><i class="icon i-bell"></i>แจ้งเตือน</a>
+  <a href="profile.html" class="on"><i class="icon i-user"></i>โปรไฟล์</a>
+</nav>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้าจัดการระบบ (เฉพาะแอดมิน) =====
+  requireAdmin();
+
+  /* ---------- แท็บ ---------- */
+  document.querySelectorAll("#tabs button").forEach(function (button) {
+    button.addEventListener("click", function () {
+      document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b === button));
+      // แสดงเฉพาะ section ที่ชื่อตรงกับแท็บ เช่น data-tab="events" → id="eventsTab"
+      ["requests", "events", "news"].forEach(name => {
+        document.getElementById(name + "Tab").hidden = button.dataset.tab !== name;
+      });
+    });
+  });
+
+  /* ---------- ตัวเลขสรุป ---------- */
+  function showStats() {
+    const waiting = getRequests().filter(r => r.status === "sending" || r.status === "processing").length;
+    const upcoming = getEvents().filter(e => !isPast(e)).length;
+    const students = getUsers().filter(u => !isAdmin(u)).length;
+    const seats = getEvents().reduce((sum, e) => sum + e.joined, 0);
+    const stats = [[waiting, "คำขอรอพิจารณา"], [upcoming, "กิจกรรมที่กำลังจะมา"], [students, "นักศึกษาในระบบ"], [seats, "ที่นั่งที่ถูกจองแล้ว"]];
+    document.getElementById("stats").innerHTML = stats.map(s => `<div class="box"><b>${s[0].toLocaleString()}</b><small>${s[1]}</small></div>`).join("");
+  }
+
+  /* ---------- กิจกรรมทั้งหมด ---------- */
+  function showEventList() {
+    const events = sortByDate(getEvents()).reverse(); // ใหม่ล่าสุดก่อน
+    document.getElementById("eventList").innerHTML = events.map(e => `
+      <div class="box row-item">
+        <div>
+          <h3><a class="link" href="event.html?id=${e.id}">${safe(e.title)}</a></h3>
+          <small class="muted">${eventTime(e)} · ${safe(e.organizer)} · เข้าร่วม ${e.joined}/${e.cap}</small>
+        </div>
+        <div class="row-acts">
+          ${badgeHTML(e)}
+          ${isPast(e) ? "" : `<button class="btn ghost sm" onclick="toggleEvent('${e.id}')">${e.status === "open" ? "ปิดรับสมัคร" : "เปิดรับสมัคร"}</button>`}
+          <button class="btn danger-outline sm" onclick="removeEvent('${e.id}')">ลบ</button>
+        </div>
+      </div>`).join("") || '<div class="empty box sm"><p class="muted">ยังไม่มีกิจกรรม</p></div>';
+  }
+
+  function toggleEvent(id) {
+    const event = getEventById(id);
+    event.status = event.status === "open" ? "closed" : "open";
+    updateEvent(event);
+    showToast(event.status === "open" ? "เปิดรับสมัครแล้ว" : "ปิดรับสมัครแล้ว");
+    showEventList();
+  }
+
+  function removeEvent(id) {
+    if (!confirm("ลบกิจกรรม \"" + getEventById(id).title + "\" ใช่ไหม?")) return;
+    deleteEvent(id);
+    showToast("ลบกิจกรรมแล้ว");
+    showEventList();
+    showStats();
+  }
+
+  /* ---------- คำขอจัดกิจกรรม ---------- */
+
+  // ปุ่มของแต่ละสถานะ
+  function adminButtonsHTML(r) {
+    if (r.status === "approved" || r.status === "rejected") {
+      return '<p class="muted" style="margin-top: 12px">พิจารณาแล้ว</p>';
+    }
+    const receive = r.status === "sending"
+      ? `<button class="btn ghost" onclick="setStatus('${r.id}', 'processing')">รับเรื่อง (ดำเนินการ)</button>`
+      : "";
+    return `<div class="req-acts">
+        ${receive}
+        <button class="btn primary" onclick="setStatus('${r.id}', 'approved')">อนุมัติ</button>
+        <button class="btn danger-outline" onclick="setStatus('${r.id}', 'rejected')">ไม่อนุมัติ</button>
+      </div>`;
+  }
+
+  function showRequests() {
+    // คำขอที่ยังไม่ได้พิจารณาขึ้นก่อน
+    const order = { sending: 0, processing: 1, rejected: 2, approved: 2 };
+    const requests = getRequests().sort((a, b) => order[a.status] - order[b.status]);
+
+    document.getElementById("requestList").innerHTML = requests.map(function (r) {
+      const owner = getUsers().find(u => u.email === r.createdBy);
+      const ownerName = owner ? owner.first + " " + owner.last : r.createdBy;
+      return `
+        <article class="box req">
+          <div class="req-head">
+            <div>
+              <h3>${safe(r.title)}</h3>
+              <small class="muted">ผู้ยื่น: ${safe(ownerName)} · ถึงคณบดี${safe(r.toFaculty)} · ${thaiDate(r.submittedAt)}</small>
+            </div>
+            ${requestBadgeHTML(r)}
+          </div>
+          ${trackerHTML(r)}
+          <p class="muted" style="margin-top: 10px">${safe(r.desc)}</p>
+          <dl class="info-list">
+            <div><dt>วันเวลา</dt><dd>${eventTime(r)}</dd></div>
+            <div><dt>สถานที่</dt><dd>${safe(r.place)}</dd></div>
+            <div><dt>ผู้จัดงาน</dt><dd>${safe(r.organizer)}</dd></div>
+            <div><dt>ผู้รับผิดชอบค่าใช้จ่าย</dt><dd>${safe(r.payer)}${r.budget ? " · งบ " + r.budget.toLocaleString() + " บาท" : ""}</dd></div>
+            <div><dt>จำนวนคน</dt><dd>${r.people} คน</dd></div>
+          </dl>
+          ${r.status === "rejected" ? `<p class="notice err">เหตุผล: ${safe(r.note)}</p>` : ""}
+          ${adminButtonsHTML(r)}
+        </article>`;
+    }).join("") || '<div class="empty box sm"><p class="muted">ยังไม่มีคำขอ</p></div>';
+  }
+
+  // เปลี่ยนสถานะคำขอ
+  function setStatus(id, status) {
+    const request = getRequestById(id);
+
+    if (status === "rejected") {
+      const reason = prompt("เหตุผลที่ไม่อนุมัติ (ผู้ยื่นจะเห็นข้อความนี้)");
+      if (reason === null || reason.trim() === "") return; // กดยกเลิก หรือไม่ได้พิมพ์
+      request.note = reason.trim();
+    }
+
+    request.status = status;
+    updateRequest(request);
+    showStats();
+    showToast("เปลี่ยนสถานะเป็น \"" + REQUEST_STATUS[status].text + "\" แล้ว");
+    showRequests();
+  }
+
+  /* ---------- ประกาศ ---------- */
+
+  function showNews() {
+    document.getElementById("newsList").innerHTML = getNews().map(n =>
+      `<div class="card-wrap">${newsCardHTML(n)}<button class="btn danger-outline sm" onclick="deleteNews('${n.id}')">ลบประกาศนี้</button></div>`
+    ).join("") || '<p class="muted">ยังไม่มีประกาศ</p>';
+  }
+
+  function deleteNews(id) {
+    if (!confirm("ลบประกาศนี้ใช่ไหม?")) return;
+    saveNews(getNews().filter(n => n.id !== id));
+    showToast("ลบประกาศแล้ว");
+    showNews();
+  }
+
+  const newsForm = document.getElementById("newsForm");
+  const imgPreview = document.getElementById("imgPreview");
+  let posterImage = ""; // รูปโปสเตอร์ที่แปลงเป็นข้อความ (data URL) เพื่อเก็บใน localStorage ได้
+
+  // เลือกไฟล์โปสเตอร์: ย่อรูปให้กว้างไม่เกิน 1000px แล้วแสดงตัวอย่าง
+  // (ต้องย่อ เพราะ localStorage เก็บได้แค่ประมาณ 5MB)
+  newsForm.elements.image.addEventListener("change", function () {
+    const file = this.files[0];
+    posterImage = "";
+    imgPreview.hidden = true;
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function () {
+      const img = new Image();
+      img.onload = function () {
+        const scale = Math.min(1, 1000 / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#fff"; // พื้นขาว (กันรูป PNG พื้นใสกลายเป็นสีดำ)
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        posterImage = canvas.toDataURL("image/jpeg", 0.8);
+        imgPreview.src = posterImage;
+        imgPreview.hidden = false;
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  newsForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const f = newsForm.elements;
+    if (f.title.value.trim() === "" || f.text.value.trim() === "") {
+      showFormError(newsForm, "กรุณากรอกหัวข้อและข้อความสั้น");
+      return;
+    }
+
+    const news = getNews();
+    news.unshift({
+      id: "n" + Date.now(),
+      tag: f.tag.value,
+      color: f.color.value,
+      title: f.title.value.trim(),
+      text: f.text.value.trim(),
+      detail: f.detail.value.trim(),
+      image: posterImage,
+      link: f.link.value.trim()
+    });
+
+    // ถ้าพื้นที่ localStorage เต็ม (รูปใหญ่/เยอะเกินไป) จะบันทึกไม่ได้
+    try {
+      saveNews(news);
+    } catch (error) {
+      showFormError(newsForm, "พื้นที่เก็บข้อมูลเต็ม ลองใช้รูปที่เล็กลง หรือลบประกาศเก่าก่อน");
+      return;
+    }
+
+    newsForm.reset();
+    posterImage = "";
+    imgPreview.hidden = true;
+    showToast("เพิ่มประกาศแล้ว ไปดูได้ที่หน้ากิจกรรม");
+    showNews();
+  });
+  newsForm.addEventListener("input", () => hideFormError(newsForm));
+
+  showStats();
+  showRequests();
+  showEventList();
+  showNews();
+</script>
+</body>
+</html>

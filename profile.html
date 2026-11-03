@@ -20,7 +20,7 @@
       <a href="profile.html" class="on"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
     </nav>
     <div class="top-actions">
-      <a class="btn outline sm create-btn" href="create.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="btn outline sm create-btn" href="requests.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
       <a class="avatar" id="avatar" href="profile.html"></a>
     </div>
   </div>
@@ -32,6 +32,11 @@
     <div class="col rise">
       <div class="box id-card">
         <div class="avatar xl" id="bigAvatar"></div>
+        <!-- เปลี่ยน / ลบรูปโปรไฟล์ (label ครอบ input ไว้ กดที่ปุ่มแล้วจะเปิดหน้าต่างเลือกไฟล์) -->
+        <div class="photo-acts">
+          <label class="btn outline sm">เปลี่ยนรูปโปรไฟล์<input type="file" id="photoInput" accept="image/*"></label>
+          <button class="btn ghost sm" id="removePhotoBtn" hidden>ลบรูป</button>
+        </div>
         <h2 id="fullName"></h2>
         <p class="muted" id="idLine"></p>
       </div>
@@ -40,6 +45,7 @@
         <div><b id="statSaved">0</b><small>บันทึกไว้</small></div>
         <div><b id="statCreated">0</b><small>สร้างไว้</small></div>
       </div>
+      <a class="btn outline block" id="adminLink" href="admin.html" hidden><i class="icon icon-18 i-shield"></i> จัดการระบบ (แอดมิน)</a>
       <button class="btn ghost block" id="logoutBtn">ออกจากระบบ</button>
       <button class="btn danger-outline block" id="deleteBtn">ลบบัญชี</button>
     </div>
@@ -53,8 +59,9 @@
           <label class="field"><span>ชื่อ</span><input name="first" type="text"></label>
           <label class="field"><span>นามสกุล</span><input name="last" type="text"></label>
         </div>
-        <label class="field"><span>รหัสนักศึกษา</span><input name="studentId" type="text" inputmode="numeric" maxlength="8"></label>
-        <div class="two">
+        <!-- ข้อมูลนักศึกษา (ซ่อนเมื่อเป็นแอดมิน) -->
+        <label class="field student-only"><span>รหัสนักศึกษา</span><input name="studentId" type="text" inputmode="numeric" maxlength="8"></label>
+        <div class="two student-only">
           <label class="field">
             <span>คณะ/สาขา</span>
             <select name="faculty">
@@ -82,10 +89,36 @@
         <button class="btn primary block">บันทึก</button>
       </form>
 
+      <!-- เปลี่ยนรหัสผ่าน -->
+      <form class="box stack" id="passwordForm" novalidate>
+        <h3>เปลี่ยนรหัสผ่าน</h3>
+        <p class="form-err" role="alert" hidden></p>
+        <label class="field"><span>รหัสผ่านเดิม</span><input name="oldPassword" type="password" autocomplete="current-password"></label>
+        <div class="two">
+          <label class="field"><span>รหัสผ่านใหม่ (อย่างน้อย 8 ตัว)</span><input name="newPassword" type="password" autocomplete="new-password"></label>
+          <label class="field"><span>ยืนยันรหัสผ่านใหม่</span><input name="confirmPassword" type="password" autocomplete="new-password"></label>
+        </div>
+        <button class="btn outline block">เปลี่ยนรหัสผ่าน</button>
+      </form>
+
       <div class="box stack">
         <h3>ความเป็นส่วนตัว</h3>
         <label class="check"><input type="checkbox" id="showName"> แสดงชื่อและคณะต่อผู้จัดกิจกรรม</label>
         <label class="check"><input type="checkbox" id="notify"> รับการแจ้งเตือนกิจกรรม</label>
+      </div>
+
+      <!-- ข้อมูลติดต่อแอดมิน -->
+      <div class="box">
+        <h3>ติดต่อผู้ดูแลระบบ</h3>
+        <p class="muted">มีปัญหาการใช้งาน หรือสอบถามเรื่องคำขอจัดกิจกรรม ติดต่อได้ที่</p>
+        <ul class="contact-list">
+          <li><i class="icon icon-18 i-shield"></i><b id="adminName"></b></li>
+          <li><i class="icon icon-18 i-mail"></i><a id="adminEmail"></a></li>
+          <li><i class="icon icon-18 i-phone"></i><span id="adminPhone"></span></li>
+          <li><i class="icon icon-18 i-user"></i><span id="adminLine"></span></li>
+          <li><i class="icon icon-18 i-clock"></i><span id="adminHours"></span></li>
+          <li><i class="icon icon-18 i-pin"></i><span id="adminPlace"></span></li>
+        </ul>
       </div>
     </div>
   </div>
@@ -110,10 +143,11 @@
   // แสดงข้อมูลผู้ใช้ในหน้า
   function showProfile() {
     const user = getCurrentUser();
-    document.getElementById("avatar").textContent = user.first[0];
-    document.getElementById("bigAvatar").textContent = user.first[0];
+    showAvatar(document.getElementById("avatar"), user);
+    showAvatar(document.getElementById("bigAvatar"), user);
+    document.getElementById("removePhotoBtn").hidden = !user.photo;
     document.getElementById("fullName").textContent = user.first + " " + user.last;
-    document.getElementById("idLine").textContent = user.studentId + " · " + user.faculty;
+    document.getElementById("idLine").textContent = isAdmin(user) ? "ผู้ดูแลระบบ · " + user.faculty : user.studentId + " · " + user.faculty;
     document.getElementById("statJoined").textContent = user.joined.length;
     document.getElementById("statSaved").textContent = user.saved.length;
     document.getElementById("statCreated").textContent = getEvents().filter(e => e.createdBy === user.email).length;
@@ -130,6 +164,19 @@
   document.getElementById("notify").checked = user.notify;
   showProfile();
 
+  // แอดมิน: แสดงปุ่มจัดการระบบ และซ่อนช่องข้อมูลนักศึกษา
+  document.getElementById("adminLink").hidden = !isAdmin(user);
+  document.querySelectorAll(".student-only").forEach(el => el.hidden = isAdmin(user));
+
+  // ข้อมูลติดต่อแอดมิน (มาจาก ADMIN_CONTACT ใน common.js)
+  document.getElementById("adminName").textContent = ADMIN_CONTACT.name;
+  document.getElementById("adminEmail").textContent = ADMIN_CONTACT.email;
+  document.getElementById("adminEmail").href = "mailto:" + ADMIN_CONTACT.email;
+  document.getElementById("adminPhone").textContent = ADMIN_CONTACT.phone;
+  document.getElementById("adminLine").textContent = "Line: " + ADMIN_CONTACT.line;
+  document.getElementById("adminHours").textContent = ADMIN_CONTACT.hours;
+  document.getElementById("adminPlace").textContent = ADMIN_CONTACT.place;
+
   // กด "บันทึก"
   form.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -141,23 +188,98 @@
       showFormError(form, "กรุณากรอกชื่อและนามสกุล");
       return;
     }
-    if (!/^\d{8}$/.test(studentId)) {
-      showFormError(form, "รหัสนักศึกษาต้องเป็นตัวเลข 8 หลัก");
-      return;
-    }
-
     const user = getCurrentUser();
     user.first = first;
     user.last = last;
-    user.studentId = studentId;
-    user.faculty = f.faculty.value;
-    user.year = f.year.value;
+
+    // ข้อมูลนักศึกษา (แอดมินไม่มีช่องนี้)
+    if (!isAdmin(user)) {
+      if (!/^\d{8}$/.test(studentId)) {
+        showFormError(form, "รหัสนักศึกษาต้องเป็นตัวเลข 8 หลัก");
+        return;
+      }
+      user.studentId = studentId;
+      user.faculty = f.faculty.value;
+      user.year = f.year.value;
+    }
     updateCurrentUser(user);
 
     showProfile();
     showToast("บันทึกโปรไฟล์แล้ว");
   });
   form.addEventListener("input", () => hideFormError(form));
+
+  // เปลี่ยนรหัสผ่าน
+  const passwordForm = document.getElementById("passwordForm");
+  passwordForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const p = passwordForm.elements;
+    const user = getCurrentUser();
+
+    if (p.oldPassword.value !== user.password) {
+      showFormError(passwordForm, "รหัสผ่านเดิมไม่ถูกต้อง");
+      return;
+    }
+    if (p.newPassword.value.length < 8) {
+      showFormError(passwordForm, "รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร");
+      return;
+    }
+    if (p.newPassword.value !== p.confirmPassword.value) {
+      showFormError(passwordForm, "ยืนยันรหัสผ่านใหม่ไม่ตรงกัน");
+      return;
+    }
+
+    user.password = p.newPassword.value;
+    updateCurrentUser(user);
+    passwordForm.reset();
+    showToast("เปลี่ยนรหัสผ่านแล้ว");
+  });
+  passwordForm.addEventListener("input", () => hideFormError(passwordForm));
+
+  // เลือกรูปโปรไฟล์: ตัดรูปให้เป็นสี่เหลี่ยมจัตุรัส 300x300 แล้วบันทึก
+  // (ย่อรูปก่อน เพราะ localStorage เก็บได้แค่ประมาณ 5MB)
+  document.getElementById("photoInput").addEventListener("change", function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function () {
+      const img = new Image();
+      img.onload = function () {
+        // ตัดตรงกลางรูปให้เป็นสี่เหลี่ยมจัตุรัส
+        const size = Math.min(img.width, img.height);
+        const x = (img.width - size) / 2;
+        const y = (img.height - size) / 2;
+        const canvas = document.createElement("canvas");
+        canvas.width = 300;
+        canvas.height = 300;
+        canvas.getContext("2d").drawImage(img, x, y, size, size, 0, 0, 300, 300);
+
+        const user = getCurrentUser();
+        user.photo = canvas.toDataURL("image/jpeg", 0.85);
+        try {
+          updateCurrentUser(user);
+        } catch (error) {
+          showToast("พื้นที่เก็บข้อมูลเต็ม ลองใช้รูปอื่น");
+          return;
+        }
+        showProfile();
+        showToast("เปลี่ยนรูปโปรไฟล์แล้ว");
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+    this.value = ""; // เลือกรูปเดิมซ้ำได้
+  });
+
+  // ลบรูปโปรไฟล์ (กลับไปใช้ตัวอักษรแรกของชื่อ)
+  document.getElementById("removePhotoBtn").addEventListener("click", function () {
+    const user = getCurrentUser();
+    user.photo = "";
+    updateCurrentUser(user);
+    showProfile();
+    showToast("ลบรูปโปรไฟล์แล้ว");
+  });
 
   // ติ๊กตั้งค่าความเป็นส่วนตัว (บันทึกทันที)
   ["showName", "notify"].forEach(function (key) {
@@ -173,6 +295,7 @@
   document.getElementById("logoutBtn").addEventListener("click", function () {
     if (!confirm("คุณต้องการออกจากระบบใช่ไหม?")) return;
     logout();
+    toastOnNextPage("ออกจากระบบแล้ว แล้วพบกันใหม่");
     location.href = "index.html";
   });
 
@@ -190,6 +313,7 @@
       .filter(e => e.createdBy !== user.email);
     saveEvents(events);
     saveUsers(getUsers().filter(u => u.email !== user.email));
+    saveRequests(getRequests().filter(r => r.createdBy !== user.email)); // ลบคำขอจัดกิจกรรมของบัญชีนี้ด้วย
 
     logout();
     location.href = "index.html";

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ยื่นคำขอจัดกิจกรรม · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="events.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
+    <nav class="nav">
+      <a href="events.html"><i class="icon icon-18 i-house"></i>กิจกรรม</a>
+      <a href="saved.html"><i class="icon icon-18 i-heart"></i>บันทึกไว้</a>
+      <a href="mine.html" class="on"><i class="icon icon-18 i-clip"></i>ของฉัน</a>
+      <a href="notifications.html"><i class="icon icon-18 i-bell"></i>แจ้งเตือน</a>
+      <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn outline sm create-btn" href="requests.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="avatar" id="avatar" href="profile.html"></a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container create rise">
+    <a class="back" href="requests.html"><i class="icon icon-16 i-arrow-left"></i> กลับไปหน้าคำขอ</a>
+    <div class="page-head">
+      <div>
+        <h1 id="heading">ยื่นคำขอจัดกิจกรรม</h1>
+        <p class="muted">ส่งเรื่องถึงคณบดีเพื่อขออนุญาตและขออนุมัติจัดงาน</p>
+      </div>
+    </div>
+
+    <!-- แสดงเหตุผลที่ไม่อนุมัติ (ตอนแก้ไขแล้วส่งใหม่) -->
+    <p class="notice err" id="rejectNote" hidden></p>
+
+    <form id="requestForm" class="box stack form-card" novalidate>
+      <p class="form-err" role="alert" hidden></p>
+
+      <label class="field">
+        <span>ส่งถึงคณบดี</span>
+        <select name="toFaculty">
+          <option>คณะบริหารธุรกิจ</option>
+          <option>คณะบัญชี</option>
+          <option>คณะนิเทศศาสตร์</option>
+          <option>คณะเทคโนโลยีสารสนเทศ</option>
+          <option>คณะวิศวกรรมศาสตร์</option>
+          <option>คณะนิติศาสตร์</option>
+          <option>คณะศิลปศาสตร์</option>
+          <option>วิทยาลัยการบินนานาชาติ</option>
+        </select>
+      </label>
+      <label class="field"><span>ชื่อกิจกรรม</span><input name="title" type="text" maxlength="80" placeholder="เช่น ประกวดถ่ายภาพ SPU Campus"></label>
+      <label class="field"><span>รายละเอียดและวัตถุประสงค์</span><textarea name="desc" rows="4" maxlength="600" placeholder="จัดกิจกรรมอะไร เพื่ออะไร"></textarea></label>
+
+      <div class="two">
+        <label class="field"><span>วันที่</span><input name="date" type="date"></label>
+        <label class="field"><span>จำนวนคน (โดยประมาณ)</span><input name="people" type="number" min="1" placeholder="เช่น 100"></label>
+      </div>
+      <div class="two">
+        <label class="field"><span>เวลาเริ่ม</span><input name="start" type="time" value="09:00"></label>
+        <label class="field"><span>เวลาสิ้นสุด</span><input name="end" type="time" value="12:00"></label>
+      </div>
+      <label class="field"><span>สถานที่</span><input name="place" type="text" placeholder="เช่น ลานกิจกรรมกลาง"></label>
+      <label class="field"><span>ผู้จัดงาน (ชมรม / หน่วยงาน)</span><input name="organizer" type="text" placeholder="เช่น ชมรมถ่ายภาพ SPU"></label>
+      <div class="two">
+        <label class="field"><span>ผู้รับผิดชอบค่าใช้จ่าย</span><input name="payer" type="text" placeholder="เช่น งบชมรม / กองกิจการนักศึกษา"></label>
+        <label class="field"><span>งบประมาณ (บาท)</span><input name="budget" type="number" min="0" placeholder="ไม่มีให้เว้นว่าง"></label>
+      </div>
+
+      <div class="form-acts">
+        <a class="btn ghost" href="requests.html">ยกเลิก</a>
+        <button class="btn primary" id="submitBtn"><i class="icon icon-18 i-send"></i>ส่งคำขอ</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<nav class="tabbar">
+  <a href="events.html"><i class="icon i-house"></i>กิจกรรม</a>
+  <a href="saved.html"><i class="icon i-heart"></i>บันทึกไว้</a>
+  <a href="mine.html" class="on"><i class="icon i-clip"></i>ของฉัน</a>
+  <a href="notifications.html"><i class="icon i-bell"></i>แจ้งเตือน</a>
+  <a href="profile.html"><i class="icon i-user"></i>โปรไฟล์</a>
+</nav>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้ายื่นคำขอจัดกิจกรรม (ใช้ทั้งยื่นใหม่ และแก้ไขคำขอที่ไม่อนุมัติ) =====
+  const user = requireLogin();
+  const form = document.getElementById("requestForm");
+  const f = form.elements;
+  const FIELDS = ["toFaculty", "title", "desc", "date", "start", "end", "place", "organizer", "payer", "budget", "people"];
+
+  f.date.min = today();
+  f.toFaculty.value = user.faculty; // ส่งถึงคณบดีคณะของตัวเองเป็นค่าเริ่มต้น
+
+  // ถ้าลิงก์เป็น request.html?id=r3 = แก้ไขคำขอที่ไม่อนุมัติ
+  let editing = getRequestById(new URLSearchParams(location.search).get("id"));
+  if (editing && editing.createdBy === user.email && editing.status === "rejected") {
+    FIELDS.forEach(name => f[name].value = editing[name] || "");
+    document.getElementById("heading").textContent = "แก้ไขคำขอแล้วส่งใหม่";
+    document.getElementById("submitBtn").innerHTML = '<i class="icon icon-18 i-send"></i>ส่งใหม่';
+    const note = document.getElementById("rejectNote");
+    note.textContent = "เหตุผลที่ไม่อนุมัติ: " + editing.note;
+    note.hidden = false;
+  } else {
+    editing = null;
+  }
+
+  // ตรวจข้อมูล ถ้าผิดคืนข้อความ error
+  function checkForm(d) {
+    if (d.title === "") return "กรุณากรอกชื่อกิจกรรม";
+    if (d.desc === "") return "กรุณากรอกรายละเอียดและวัตถุประสงค์";
+    if (d.date === "") return "กรุณาเลือกวันที่";
+    if (d.date < today()) return "วันที่ต้องไม่ย้อนหลัง";
+    if (d.start === "" || d.end === "" || d.start >= d.end) return "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม";
+    if (d.place === "") return "กรุณากรอกสถานที่";
+    if (d.organizer === "") return "กรุณากรอกผู้จัดงาน";
+    if (d.payer === "") return "กรุณากรอกผู้รับผิดชอบค่าใช้จ่าย";
+    if (!(d.people >= 1)) return "จำนวนคนต้องมีอย่างน้อย 1 คน";
+    if (d.budget < 0) return "งบประมาณต้องไม่ติดลบ";
+    return "";
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const data = {
+      toFaculty: f.toFaculty.value,
+      title: f.title.value.trim(),
+      desc: f.desc.value.trim(),
+      date: f.date.value,
+      start: f.start.value,
+      end: f.end.value,
+      place: f.place.value.trim(),
+      organizer: f.organizer.value.trim(),
+      payer: f.payer.value.trim(),
+      budget: Number(f.budget.value),
+      people: Number(f.people.value)
+    };
+
+    const error = checkForm(data);
+    if (error !== "") {
+      showFormError(form, error);
+      return;
+    }
+
+    // ส่งแล้วสถานะเริ่มที่ "กำลังส่ง" เสมอ
+    const status = { status: "sending", note: "", submittedAt: today() };
+
+    if (editing) {
+      updateRequest(Object.assign(editing, data, status));
+    } else {
+      const requests = getRequests();
+      requests.push(Object.assign({ id: "r" + Date.now(), createdBy: user.email, eventId: null }, data, status));
+      saveRequests(requests);
+    }
+
+    toastOnNextPage("ส่งคำขอถึงคณบดีแล้ว ติดตามสถานะได้ที่หน้านี้");
+    location.href = "requests.html";
+  });
+
+  form.addEventListener("input", () => hideFormError(form));
+</script>
+</body>
+</html>

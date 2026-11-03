@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ประกาศ · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="events.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
+    <nav class="nav">
+      <a href="events.html" class="on"><i class="icon icon-18 i-house"></i>กิจกรรม</a>
+      <a href="saved.html"><i class="icon icon-18 i-heart"></i>บันทึกไว้</a>
+      <a href="mine.html"><i class="icon icon-18 i-clip"></i>ของฉัน</a>
+      <a href="notifications.html"><i class="icon icon-18 i-bell"></i>แจ้งเตือน</a>
+      <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn outline sm create-btn" href="requests.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="avatar" id="avatar" href="profile.html"></a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container narrow">
+    <a class="back" href="events.html"><i class="icon icon-16 i-arrow-left"></i> กลับหน้าหลัก</a>
+
+    <!-- แสดงเมื่อหาประกาศไม่เจอ -->
+    <div class="empty box" id="notFound" hidden>
+      <h3>ไม่พบประกาศนี้</h3>
+      <p class="muted">ประกาศอาจถูกลบไปแล้ว</p>
+      <a class="btn primary" href="events.html">กลับหน้าหลัก</a>
+    </div>
+
+    <!-- รายละเอียดประกาศ (JavaScript จะเติมข้อมูลให้) -->
+    <article class="news-detail rise" id="detail">
+      <div class="news-detail-head" id="head">
+        <span class="pill" id="tag"></span>
+        <h1 id="title"></h1>
+        <p id="text"></p>
+      </div>
+      <img class="news-detail-img" id="image" alt="โปสเตอร์" hidden>
+      <div class="box" id="detailBox">
+        <h3>รายละเอียด</h3>
+        <p class="muted pre" id="detailText"></p>
+      </div>
+      <a class="btn primary lg" id="linkBtn" hidden></a>
+      <!-- ปุ่มลบ (เห็นเฉพาะแอดมิน) -->
+      <button class="btn danger-outline" id="deleteNewsBtn" hidden>ลบประกาศนี้</button>
+    </article>
+  </div>
+</main>
+
+<nav class="tabbar">
+  <a href="events.html" class="on"><i class="icon i-house"></i>กิจกรรม</a>
+  <a href="saved.html"><i class="icon i-heart"></i>บันทึกไว้</a>
+  <a href="mine.html"><i class="icon i-clip"></i>ของฉัน</a>
+  <a href="notifications.html"><i class="icon i-bell"></i>แจ้งเตือน</a>
+  <a href="profile.html"><i class="icon i-user"></i>โปรไฟล์</a>
+</nav>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้ารายละเอียดประกาศ / ประชาสัมพันธ์ (เช่น news.html?id=n1) =====
+  const user = requireLogin();
+  const id = new URLSearchParams(location.search).get("id");
+  const news = getNews().find(n => n.id === id);
+
+  if (!news) {
+    document.getElementById("notFound").hidden = false;
+    document.getElementById("detail").hidden = true;
+  } else {
+    document.title = news.title + " · SPU Event";
+    document.getElementById("head").classList.add(news.color);
+    document.getElementById("tag").textContent = news.tag;
+    document.getElementById("title").textContent = news.title;
+    document.getElementById("text").textContent = news.text;
+
+    // รูปโปสเตอร์ (ถ้ามี)
+    if (news.image) {
+      document.getElementById("image").src = news.image;
+      document.getElementById("image").hidden = false;
+    }
+
+    // รายละเอียด (ถ้าไม่ได้กรอก ซ่อนกล่องนี้)
+    document.getElementById("detailText").textContent = news.detail || "";
+    document.getElementById("detailBox").hidden = !news.detail;
+
+    // ปุ่มลิงก์ที่เกี่ยวข้อง: ลิงก์ภายนอก (http...) เปิดในแท็บใหม่
+    if (news.link) {
+      const linkBtn = document.getElementById("linkBtn");
+      linkBtn.href = news.link;
+      linkBtn.hidden = false;
+      if (news.link.startsWith("http")) {
+        linkBtn.target = "_blank";
+        linkBtn.rel = "noopener";
+        linkBtn.innerHTML = '<i class="icon icon-18 i-link"></i> เปิดลิงก์ที่เกี่ยวข้อง';
+      } else if (news.link.startsWith("event.html")) {
+        linkBtn.innerHTML = 'ดูกิจกรรม <i class="icon icon-18 i-arrow-right"></i>';
+      } else {
+        linkBtn.innerHTML = 'ไปที่หน้าที่เกี่ยวข้อง <i class="icon icon-18 i-arrow-right"></i>';
+      }
+    }
+
+    // แอดมิน: ลบประกาศนี้ได้จากหน้านี้เลย
+    const deleteBtn = document.getElementById("deleteNewsBtn");
+    deleteBtn.hidden = !isAdmin(user);
+    deleteBtn.addEventListener("click", function () {
+      if (!confirm("ลบประกาศ \"" + news.title + "\" ใช่ไหม?")) return;
+      saveNews(getNews().filter(n => n.id !== news.id));
+      toastOnNextPage("ลบประกาศแล้ว");
+      location.href = "events.html";
+    });
+  }
+</script>
+</body>
+</html>

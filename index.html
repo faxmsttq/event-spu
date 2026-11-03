@@ -13,7 +13,7 @@
 <header class="topbar">
   <div class="topbar-in">
     <a class="brand" href="index.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
-    <div class="top-actions">
+    <div class="top-actions" id="topActions">
       <a class="btn outline sm" href="login.html">เข้าสู่ระบบ</a>
       <a class="btn primary sm" href="signup.html">สมัครสมาชิก</a>
     </div>
@@ -87,7 +87,7 @@
         <div class="box feature">
           <span class="fic"><i class="icon icon-18 i-plus"></i></span>
           <h3>สร้างกิจกรรมเอง</h3>
-          <p class="muted">เป็นผู้จัดได้เลย ส่งให้ผู้ดูแลตรวจสอบแล้วเปิดรับสมัคร</p>
+          <p class="muted">ยื่นขออนุมัติคณบดีผ่านระบบ อนุมัติแล้วโพสต์เปิดรับสมัครได้ทันที</p>
         </div>
       </div>
     </section>
@@ -116,6 +116,16 @@
 <footer class="footer">
   <div class="container">© SPU Event · ข้อมูลกิจกรรมเป็นข้อมูลตัวอย่าง</div>
 </footer>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ถ้าล็อกอินอยู่แล้ว เปลี่ยนปุ่มด้านบนเป็น "ไปหน้ากิจกรรม"
+  if (getCurrentUser()) {
+    document.getElementById("topActions").innerHTML =
+      '<a class="btn primary sm" href="events.html">ไปหน้ากิจกรรม <i class="icon icon-18 i-arrow-right"></i></a>';
+  }
+</script>
 
 </body>
 </html>

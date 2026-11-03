@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คำขอจัดกิจกรรม · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="events.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
+    <nav class="nav">
+      <a href="events.html"><i class="icon icon-18 i-house"></i>กิจกรรม</a>
+      <a href="saved.html"><i class="icon icon-18 i-heart"></i>บันทึกไว้</a>
+      <a href="mine.html" class="on"><i class="icon icon-18 i-clip"></i>ของฉัน</a>
+      <a href="notifications.html"><i class="icon icon-18 i-bell"></i>แจ้งเตือน</a>
+      <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn outline sm create-btn" href="requests.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="avatar" id="avatar" href="profile.html"></a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container narrow rise">
+    <div class="page-head">
+      <div>
+        <h1>คำขอจัดกิจกรรม</h1>
+        <p class="muted">ต้องได้รับอนุมัติจากคณบดีก่อน จึงจะสร้างกิจกรรมได้</p>
+      </div>
+      <a class="btn primary" href="request.html"><i class="icon icon-18 i-send"></i>ยื่นคำขอใหม่</a>
+    </div>
+
+    <!-- รายการคำขอ + สถานะ (JavaScript จะใส่ให้) -->
+    <div class="stack rise" id="list"></div>
+
+    <div class="empty box" id="empty" hidden>
+      <div class="empty-ic"><i class="icon icon-38 i-send"></i></div>
+      <h3>ยังไม่มีคำขอจัดกิจกรรม</h3>
+      <p class="muted">ยื่นคำขอถึงคณบดีของคณะ เพื่อขออนุญาตจัดกิจกรรม</p>
+      <a class="btn primary" href="request.html">ยื่นคำขอใหม่</a>
+    </div>
+  </div>
+</main>
+
+<nav class="tabbar">
+  <a href="events.html"><i class="icon i-house"></i>กิจกรรม</a>
+  <a href="saved.html"><i class="icon i-heart"></i>บันทึกไว้</a>
+  <a href="mine.html" class="on"><i class="icon i-clip"></i>ของฉัน</a>
+  <a href="notifications.html"><i class="icon i-bell"></i>แจ้งเตือน</a>
+  <a href="profile.html"><i class="icon i-user"></i>โปรไฟล์</a>
+</nav>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  // ===== หน้าสถานะคำขอจัดกิจกรรม =====
+  const user = requireLogin();
+
+  // คำขอของฉัน เรียงจากยื่นล่าสุดก่อน
+  const myRequests = getRequests()
+    .filter(r => r.createdBy === user.email)
+    .sort((a, b) => a.submittedAt < b.submittedAt ? 1 : -1);
+
+  // ข้อความและปุ่มด้านล่างของแต่ละสถานะ
+  function actionsHTML(r) {
+    if (r.status === "sending") {
+      return '<p class="notice">ส่งคำขอแล้ว รอคณะรับเรื่อง</p>';
+    }
+    if (r.status === "processing") {
+      return '<p class="notice">คณะรับเรื่องแล้ว กำลังพิจารณา</p>';
+    }
+    if (r.status === "rejected") {
+      return `<p class="notice err">เหตุผล: ${safe(r.note)}</p>
+        <div class="req-acts"><a class="btn primary" href="request.html?id=${r.id}">แก้ไขและส่งใหม่</a></div>`;
+    }
+    // อนุมัติแล้ว: ยังไม่สร้างกิจกรรม → ไปหน้าสร้าง / สร้างแล้ว → ดูกิจกรรม
+    if (r.eventId) {
+      return `<div class="req-acts"><a class="btn outline" href="event.html?id=${r.eventId}">ดูกิจกรรมที่โพสต์แล้ว</a></div>`;
+    }
+    return `<div class="req-acts"><a class="btn primary" href="create.html?request=${r.id}">ไปต่อหน้าสร้างกิจกรรม <i class="icon icon-18 i-arrow-right"></i></a></div>`;
+  }
+
+  document.getElementById("list").innerHTML = myRequests.map(r => `
+    <article class="box req">
+      <div class="req-head">
+        <div>
+          <h3>${safe(r.title)}</h3>
+          <small class="muted">ส่งถึงคณบดี${safe(r.toFaculty)} · ยื่นเมื่อ ${thaiDate(r.submittedAt)}</small>
+        </div>
+        ${requestBadgeHTML(r)}
+      </div>
+      ${trackerHTML(r)}
+      <dl class="info-list">
+        <div><dt>วันเวลา</dt><dd>${eventTime(r)}</dd></div>
+        <div><dt>สถานที่</dt><dd>${safe(r.place)}</dd></div>
+        <div><dt>ผู้จัดงาน</dt><dd>${safe(r.organizer)}</dd></div>
+        <div><dt>ผู้รับผิดชอบค่าใช้จ่าย</dt><dd>${safe(r.payer)}${r.budget ? " · งบ " + r.budget.toLocaleString() + " บาท" : ""}</dd></div>
+        <div><dt>จำนวนคน</dt><dd>${r.people} คน</dd></div>
+      </dl>
+      ${actionsHTML(r)}
+    </article>`).join("");
+
+  document.getElementById("empty").hidden = myRequests.length > 0;
+</script>
+</body>
+</html>

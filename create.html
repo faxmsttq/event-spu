@@ -20,7 +20,7 @@
       <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
     </nav>
     <div class="top-actions">
-      <a class="btn outline sm create-btn" href="create.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="btn outline sm create-btn" href="requests.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
       <a class="avatar" id="avatar" href="profile.html"></a>
     </div>
   </div>
@@ -30,67 +30,90 @@
   <div class="container create rise">
     <div class="page-head"><h1>สร้างกิจกรรม</h1></div>
 
-    <!-- แถบขั้นตอน 3 ช่อง -->
-    <div class="progress">
-      <i id="bar1" class="on"></i><i id="bar2"></i><i id="bar3"></i>
+    <!-- แสดงเมื่อยังไม่มีคำขอที่อนุมัติ -->
+    <div class="empty box" id="noRequest" hidden>
+      <div class="empty-ic"><i class="icon icon-38 i-shield"></i></div>
+      <h3>ต้องได้รับอนุมัติจากคณบดีก่อน</h3>
+      <p class="muted">ยื่นคำขอจัดกิจกรรม เมื่อได้รับอนุมัติแล้วจึงกลับมาสร้างกิจกรรมได้</p>
+      <a class="btn primary" href="requests.html">ไปหน้าคำขอจัดกิจกรรม</a>
     </div>
-    <small class="muted" id="stepText">ขั้นตอน 1/3 · ข้อมูลกิจกรรม</small>
 
-    <form id="createForm" class="box stack form-card" novalidate>
-      <p class="form-err" role="alert" hidden></p>
+    <div id="createArea">
+      <p class="notice" id="approvedNote"></p>
 
-      <!-- ขั้นตอนที่ 1: ข้อมูลกิจกรรม -->
-      <div class="step stack" id="step1">
-        <div class="field">
-          <span>หมวดหมู่</span>
-          <div class="chips">
-            <label class="chip"><input type="radio" name="cat" value="วิชาการ" checked>วิชาการ</label>
-            <label class="chip"><input type="radio" name="cat" value="ความบันเทิง">ความบันเทิง</label>
-            <label class="chip"><input type="radio" name="cat" value="กีฬา">กีฬา</label>
-            <label class="chip"><input type="radio" name="cat" value="จิตอาสา">จิตอาสา</label>
+      <!-- แถบขั้นตอน 3 ช่อง -->
+      <div class="progress" style="margin-top: 16px">
+        <i id="bar1" class="on"></i><i id="bar2"></i><i id="bar3"></i>
+      </div>
+      <small class="muted" id="stepText">ขั้นตอน 1/3 · ข้อมูลกิจกรรม</small>
+
+      <form id="createForm" class="box stack form-card" novalidate>
+        <p class="form-err" role="alert" hidden></p>
+
+        <!-- ขั้นตอนที่ 1: ข้อมูลกิจกรรม + แบบฟอร์มสมัคร -->
+        <div class="step stack" id="step1">
+          <div class="field">
+            <span>หมวดหมู่</span>
+            <div class="chips">
+              <label class="chip"><input type="radio" name="cat" value="วิชาการ" checked>วิชาการ</label>
+              <label class="chip"><input type="radio" name="cat" value="ความบันเทิง">ความบันเทิง</label>
+              <label class="chip"><input type="radio" name="cat" value="กีฬา">กีฬา</label>
+              <label class="chip"><input type="radio" name="cat" value="จิตอาสา">จิตอาสา</label>
+            </div>
+          </div>
+          <label class="field"><span>ชื่อกิจกรรม</span><input name="title" type="text" maxlength="80"></label>
+          <div class="two">
+            <label class="field"><span>ข้อความบนโปสเตอร์</span><input name="poster" type="text" maxlength="16" placeholder="เช่น PHOTO"></label>
+            <label class="field"><span>คำโปรย</span><input name="tagline" type="text" maxlength="40" placeholder="เช่น เก็บมุมสวยในรั้วมหาวิทยาลัย"></label>
+          </div>
+          <label class="field"><span>รายละเอียด</span><textarea name="desc" rows="4" maxlength="600"></textarea></label>
+          <div class="two">
+            <label class="field"><span>ผู้เข้าร่วม</span><input name="who" type="text" placeholder="เช่น นักศึกษาทุกคณะ"></label>
+            <label class="field"><span>สิ่งที่ต้องเตรียม</span><input name="bring" type="text" placeholder="เช่น กล้องหรือมือถือ"></label>
+          </div>
+          <label class="field">
+            <span>ลิงก์แบบฟอร์มสมัคร (ถ้ามี)</span>
+            <input name="formLink" type="url" placeholder="เช่น https://forms.gle/...">
+            <small class="muted">แนบลิงก์ Google Form หรือแบบฟอร์มอื่น เพื่อเก็บข้อมูลผู้สมัคร</small>
+          </label>
+        </div>
+
+        <!-- ขั้นตอนที่ 2: วันเวลา สถานที่ และผู้ติดต่อ -->
+        <div class="step stack" id="step2" hidden>
+          <div class="two">
+            <label class="field"><span>วันที่</span><input name="date" type="date"></label>
+            <label class="field"><span>จำนวนที่รับ</span><input name="cap" type="number" min="1"></label>
+          </div>
+          <div class="two">
+            <label class="field"><span>เริ่ม</span><input name="start" type="time"></label>
+            <label class="field"><span>สิ้นสุด</span><input name="end" type="time"></label>
+          </div>
+          <label class="field"><span>สถานที่</span><input name="place" type="text"></label>
+          <label class="field"><span>เจ้าภาพที่จัด</span><input name="organizer" type="text" placeholder="เช่น ชมรมถ่ายภาพ SPU"></label>
+          <label class="field"><span>ชื่อผู้ติดต่อ</span><input name="contactName" type="text"></label>
+          <div class="two">
+            <label class="field"><span>เบอร์โทร</span><input name="contactPhone" type="tel" placeholder="เช่น 081-234-5678"></label>
+            <label class="field"><span>อีเมล / Line</span><input name="contactEmail" type="text"></label>
           </div>
         </div>
-        <label class="field"><span>ชื่อกิจกรรม</span><input name="title" type="text" maxlength="80" placeholder="เช่น ประกวดถ่ายภาพ SPU Campus"></label>
-        <div class="two">
-          <label class="field"><span>ข้อความบนโปสเตอร์</span><input name="poster" type="text" maxlength="16" placeholder="เช่น PHOTO"></label>
-          <label class="field"><span>คำโปรย</span><input name="tagline" type="text" maxlength="40" placeholder="เช่น เก็บมุมสวยในรั้วมหาวิทยาลัย"></label>
-        </div>
-        <label class="field"><span>รายละเอียด</span><textarea name="desc" rows="4" maxlength="600"></textarea></label>
-        <div class="two">
-          <label class="field"><span>ผู้เข้าร่วม</span><input name="who" type="text" placeholder="เช่น นักศึกษาทุกคณะ"></label>
-          <label class="field"><span>สิ่งที่ต้องเตรียม</span><input name="bring" type="text" placeholder="เช่น กล้องหรือมือถือ"></label>
-        </div>
-      </div>
 
-      <!-- ขั้นตอนที่ 2: วันเวลาและสถานที่ -->
-      <div class="step stack" id="step2" hidden>
-        <div class="two">
-          <label class="field"><span>วันที่</span><input name="date" type="date"></label>
-          <label class="field"><span>จำนวนที่รับ</span><input name="cap" type="number" min="1" value="50"></label>
+        <!-- ขั้นตอนที่ 3: ตรวจสอบก่อนโพสต์ -->
+        <div class="step stack" id="step3" hidden>
+          <div class="card" id="preview"></div>
+          <dl class="summary">
+            <div><dt>รายละเอียด</dt><dd id="pvDesc"></dd></div>
+            <div><dt>แบบฟอร์มสมัคร</dt><dd id="pvForm"></dd></div>
+            <div><dt>เจ้าภาพ / ผู้ติดต่อ</dt><dd id="pvContact"></dd></div>
+          </dl>
+          <p class="notice">กด "โพสต์กิจกรรม" แล้วกิจกรรมจะแสดงให้ทุกคนเห็นและเปิดรับสมัครทันที</p>
         </div>
-        <div class="two">
-          <label class="field"><span>เริ่ม</span><input name="start" type="time" value="09:00"></label>
-          <label class="field"><span>สิ้นสุด</span><input name="end" type="time" value="12:00"></label>
+
+        <div class="form-acts">
+          <button type="button" class="btn ghost" id="backBtn">ยกเลิก</button>
+          <button type="submit" class="btn primary" id="nextBtn">ถัดไป</button>
         </div>
-        <label class="field"><span>สถานที่</span><input name="place" type="text" placeholder="เช่น ลานกิจกรรมกลาง"></label>
-      </div>
-
-      <!-- ขั้นตอนที่ 3: ตรวจสอบก่อนส่ง (JavaScript จะเติมตัวอย่างให้) -->
-      <div class="step stack" id="step3" hidden>
-        <div class="card" id="preview"></div>
-        <dl class="summary">
-          <div><dt>รายละเอียด</dt><dd id="pvDesc"></dd></div>
-          <div><dt>ผู้เข้าร่วม</dt><dd id="pvWho"></dd></div>
-          <div><dt>สิ่งที่ต้องเตรียม</dt><dd id="pvBring"></dd></div>
-        </dl>
-        <p class="notice">เมื่อส่งแล้ว ผู้ดูแลจะตรวจสอบก่อนเปิดรับสมัคร</p>
-      </div>
-
-      <div class="form-acts">
-        <button type="button" class="btn ghost" id="backBtn">ยกเลิก</button>
-        <button type="submit" class="btn primary" id="nextBtn">ถัดไป</button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
 </main>
 
@@ -105,15 +128,37 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
-  // ===== หน้าสร้างกิจกรรม (3 ขั้นตอน) =====
+  // ===== หน้าสร้างกิจกรรม (ต้องมีคำขอที่อนุมัติแล้ว เช่น create.html?request=r1) =====
   const user = requireLogin();
+  const request = getRequestById(new URLSearchParams(location.search).get("request"));
+
+  // สร้างได้เฉพาะคำขอของตัวเอง ที่อนุมัติแล้ว และยังไม่เคยสร้างกิจกรรม
+  const canCreate = request && request.createdBy === user.email && request.status === "approved" && !request.eventId;
+  if (!canCreate) {
+    document.getElementById("noRequest").hidden = false;
+    document.getElementById("createArea").hidden = true;
+    throw new Error("ยังไม่มีคำขอที่อนุมัติ"); // หยุดโค้ดที่เหลือ
+  }
+
   const form = document.getElementById("createForm");
   const f = form.elements;
-  const STEP_NAMES = ["", "ข้อมูลกิจกรรม", "วันเวลาและสถานที่", "ตรวจสอบก่อนส่ง"];
+  const STEP_NAMES = ["", "ข้อมูลกิจกรรม", "วันเวลา สถานที่ และผู้ติดต่อ", "ตรวจสอบก่อนโพสต์"];
+  const newId = "u" + Date.now();
   let step = 1;
 
-  // ห้ามเลือกวันที่ย้อนหลัง
+  // กรอกข้อมูลจากคำขอที่อนุมัติไว้ให้ก่อน
+  document.getElementById("approvedNote").textContent = "คำขอ \"" + request.title + "\" ได้รับอนุมัติแล้ว ข้อมูลจากคำขอถูกกรอกไว้ให้ แก้ไขได้ตามต้องการ";
+  f.title.value = request.title;
+  f.desc.value = request.desc;
+  f.date.value = request.date;
   f.date.min = today();
+  f.start.value = request.start;
+  f.end.value = request.end;
+  f.place.value = request.place;
+  f.cap.value = request.people;
+  f.organizer.value = request.organizer;
+  f.contactName.value = user.first + " " + user.last;
+  f.contactEmail.value = user.email;
 
   // รวมข้อมูลในฟอร์มเป็นกิจกรรม 1 อัน
   function getFormEvent() {
@@ -123,23 +168,28 @@
     const posterText = f.poster.value.trim() || (englishWord ? englishWord[0] : "SPU EVENT");
 
     return {
-      id: "u" + Date.now(),
+      id: newId,
       cat: f.cat.value,
-      status: "pending",
+      status: "open",
       createdBy: user.email,
+      requestId: request.id,
       title: title,
       poster: posterText.toUpperCase(),
       tagline: f.tagline.value.trim() || "กิจกรรม" + f.cat.value,
       desc: f.desc.value.trim(),
       who: f.who.value.trim(),
       bring: f.bring.value.trim(),
+      formLink: f.formLink.value.trim(),
       date: f.date.value,
       start: f.start.value,
       end: f.end.value,
       place: f.place.value.trim(),
       cap: Number(f.cap.value),
       joined: 0,
-      organizer: user.first + " " + user.last
+      organizer: f.organizer.value.trim(),
+      contactName: f.contactName.value.trim(),
+      contactPhone: f.contactPhone.value.trim(),
+      contactEmail: f.contactEmail.value.trim()
     };
   }
 
@@ -147,6 +197,8 @@
   function checkStep() {
     if (step === 1) {
       if (f.title.value.trim() === "") return "กรุณากรอกชื่อกิจกรรม";
+      const link = f.formLink.value.trim();
+      if (link !== "" && !link.startsWith("http")) return "ลิงก์แบบฟอร์มต้องขึ้นต้นด้วย http:// หรือ https://";
     }
     if (step === 2) {
       if (f.date.value === "") return "กรุณาเลือกวันที่";
@@ -154,6 +206,9 @@
       if (!(Number(f.cap.value) >= 1)) return "จำนวนที่รับต้องมีอย่างน้อย 1 คน";
       if (f.start.value === "" || f.end.value === "" || f.start.value >= f.end.value) return "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม";
       if (f.place.value.trim() === "") return "กรุณากรอกสถานที่";
+      if (f.organizer.value.trim() === "") return "กรุณากรอกเจ้าภาพที่จัด";
+      if (f.contactName.value.trim() === "") return "กรุณากรอกชื่อผู้ติดต่อ";
+      if (f.contactPhone.value.trim() === "" && f.contactEmail.value.trim() === "") return "กรุณากรอกเบอร์โทร หรืออีเมล / Line อย่างน้อย 1 ช่อง";
     }
     return "";
   }
@@ -167,7 +222,7 @@
     document.getElementById("bar3").classList.toggle("on", step >= 3);
     document.getElementById("stepText").textContent = "ขั้นตอน " + step + "/3 · " + STEP_NAMES[step];
     document.getElementById("backBtn").textContent = step === 1 ? "ยกเลิก" : "ย้อนกลับ";
-    document.getElementById("nextBtn").textContent = step === 3 ? "ส่งให้ตรวจสอบ" : "ถัดไป";
+    document.getElementById("nextBtn").textContent = step === 3 ? "โพสต์กิจกรรม" : "ถัดไป";
     hideFormError(form);
 
     // ขั้นตอนที่ 3: แสดงตัวอย่างการ์ด
@@ -175,13 +230,13 @@
       const event = getFormEvent();
       document.getElementById("preview").innerHTML = posterHTML(event) + cardBodyHTML(event);
       document.getElementById("pvDesc").textContent = event.desc || "-";
-      document.getElementById("pvWho").textContent = event.who || "-";
-      document.getElementById("pvBring").textContent = event.bring || "-";
+      document.getElementById("pvForm").textContent = event.formLink || "ไม่มี (สมัครผ่านปุ่มเข้าร่วมในเว็บ)";
+      document.getElementById("pvContact").textContent = event.organizer + " · " + event.contactName + " " + event.contactPhone + " " + event.contactEmail;
     }
     scrollTo(0, 0);
   }
 
-  // กด "ถัดไป" / "ส่งให้ตรวจสอบ"
+  // กด "ถัดไป" / "โพสต์กิจกรรม"
   form.addEventListener("submit", function (e) {
     e.preventDefault();
 
@@ -197,18 +252,21 @@
       return;
     }
 
-    // ขั้นตอนสุดท้าย: บันทึกกิจกรรมใหม่
+    // ขั้นตอนสุดท้าย: บันทึกกิจกรรม และจำไว้ว่าคำขอนี้สร้างกิจกรรมแล้ว
     const events = getEvents();
     events.push(getFormEvent());
     saveEvents(events);
-    toastOnNextPage("ส่งกิจกรรมให้ผู้ดูแลตรวจสอบแล้ว");
-    location.href = "mine.html?tab=made";
+    request.eventId = newId;
+    updateRequest(request);
+
+    toastOnNextPage("โพสต์กิจกรรมแล้ว");
+    location.href = "event.html?id=" + newId;
   });
 
   // กด "ยกเลิก" / "ย้อนกลับ"
   document.getElementById("backBtn").addEventListener("click", function () {
     if (step === 1) {
-      location.href = "events.html";
+      location.href = "requests.html";
     } else {
       step = step - 1;
       showStep();

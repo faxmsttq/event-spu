@@ -21,7 +21,7 @@
       <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
     </nav>
     <div class="top-actions">
-      <a class="btn outline sm create-btn" href="create.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
+      <a class="btn outline sm create-btn" href="requests.html"><i class="icon icon-18 i-plus"></i><span>สร้างกิจกรรม</span></a>
       <a class="avatar" id="avatar" href="profile.html"></a>
     </div>
   </div>
@@ -33,6 +33,12 @@
       <small class="muted" id="hello">สวัสดี</small>
       <h1>สนใจทำกิจกรรมอะไรดี?</h1>
     </div>
+
+    <!-- โปสเตอร์ประกาศ / ประชาสัมพันธ์ (แอดมินเพิ่ม/ลบได้ที่หน้าจัดการระบบ) -->
+    <section id="newsSection">
+      <div class="sec-head"><i class="icon i-megaphone"></i><h2>ประกาศ / ประชาสัมพันธ์</h2></div>
+      <div class="news" id="news"></div>
+    </section>
 
     <label class="search">
       <i class="icon i-search"></i>
@@ -83,6 +89,11 @@
   const user = requireLogin();
   document.getElementById("hello").textContent = "สวัสดี " + user.first;
 
+  // แสดงโปสเตอร์ประกาศ (ถ้าไม่มีประกาศเลย ซ่อนทั้งส่วน)
+  const news = getNews();
+  document.getElementById("news").innerHTML = news.map(n => newsCardHTML(n)).join("");
+  document.getElementById("newsSection").hidden = news.length === 0;
+
   // ตัวกรองที่เลือกอยู่ตอนนี้
   let keyword = "";        // คำค้นหา
   let category = "";       // หมวดหมู่ ("" = ทั้งหมด)
@@ -90,8 +101,8 @@
   let nearestFirst = true; // เรียงวันที่ใกล้สุดก่อน
 
   function showEvents() {
-    // เอาเฉพาะกิจกรรมที่ผ่านการตรวจแล้วและยังไม่จบ
-    let events = getEvents().filter(e => e.status !== "pending" && !isPast(e));
+    // เอาเฉพาะกิจกรรมที่ยังไม่จบ
+    let events = getEvents().filter(e => !isPast(e));
 
     if (category !== "") {
       events = events.filter(e => e.cat === category);
@@ -100,7 +111,7 @@
       events = events.filter(e => isOpen(e));
     }
     if (keyword !== "") {
-      events = events.filter(e => (e.title + " " + e.place + " " + e.organizer).toLowerCase().includes(keyword));
+      events = events.filter(e => (e.title + " " + e.place + " " + e.organizer + " " + e.cat + " " + e.desc).toLowerCase().includes(keyword));
     }
 
     sortByDate(events);

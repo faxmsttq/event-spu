@@ -64,16 +64,8 @@
         <div class="two student-only">
           <label class="field">
             <span>คณะ/สาขา</span>
-            <select name="faculty">
-              <option>คณะบริหารธุรกิจ</option>
-              <option>คณะบัญชี</option>
-              <option>คณะนิเทศศาสตร์</option>
-              <option>คณะเทคโนโลยีสารสนเทศ</option>
-              <option>คณะวิศวกรรมศาสตร์</option>
-              <option>คณะนิติศาสตร์</option>
-              <option>คณะศิลปศาสตร์</option>
-              <option>วิทยาลัยการบินนานาชาติ</option>
-            </select>
+            <!-- รายชื่อคณะมาจาก FACULTIES ใน common.js -->
+            <select name="faculty" data-faculties></select>
           </label>
           <label class="field">
             <span>ชั้นปี</span>
@@ -158,7 +150,7 @@
   f.first.value = user.first;
   f.last.value = user.last;
   f.studentId.value = user.studentId;
-  f.faculty.value = user.faculty;
+  if (!isAdmin(user)) setSelectValue(f.faculty, user.faculty); // แอดมินไม่มีช่องคณะ
   f.year.value = user.year;
   document.getElementById("showName").checked = user.showName;
   document.getElementById("notify").checked = user.notify;
@@ -301,17 +293,25 @@
 
   // ลบบัญชี: ลบผู้ใช้ และกิจกรรมที่ผู้ใช้สร้างไว้
   document.getElementById("deleteBtn").addEventListener("click", function () {
-    if (!confirm("ลบบัญชีใช่ไหม? ข้อมูลทั้งหมดจะถูกลบและกู้คืนไม่ได้")) return;
     const user = getCurrentUser();
 
-    // คืนที่นั่งของกิจกรรมที่เคยเข้าร่วม และลบกิจกรรมที่สร้างไว้
-    const events = getEvents()
-      .map(function (e) {
-        if (user.joined.includes(e.id)) e.joined = e.joined - 1;
-        return e;
-      })
-      .filter(e => e.createdBy !== user.email);
-    saveEvents(events);
+    // ต้องเหลือแอดมินอย่างน้อย 1 คนเสมอ
+    if (isAdmin(user) && getUsers().filter(isAdmin).length <= 1) {
+      alert("ลบบัญชีนี้ไม่ได้ เพราะเป็นผู้ดูแลระบบคนสุดท้าย");
+      return;
+    }
+    if (!confirm("ลบบัญชีใช่ไหม? ข้อมูลทั้งหมดจะถูกลบและกู้คืนไม่ได้")) return;
+
+    // 1) คืนที่นั่งของกิจกรรมที่เคยเข้าร่วม
+    saveEvents(getEvents().map(function (e) {
+      if (user.joined.includes(e.id)) e.joined = Math.max(0, e.joined - 1);
+      return e;
+    }));
+
+    // 2) ลบกิจกรรมที่สร้างไว้ ผ่าน deleteEvent() เพื่อล้าง id ออกจากรายการบันทึก/เข้าร่วมของทุกคนด้วย
+    getEvents().filter(e => e.createdBy === user.email).forEach(e => deleteEvent(e.id));
+
+    // 3) ลบผู้ใช้
     saveUsers(getUsers().filter(u => u.email !== user.email));
     saveRequests(getRequests().filter(r => r.createdBy !== user.email)); // ลบคำขอจัดกิจกรรมของบัญชีนี้ด้วย
 

@@ -36,7 +36,8 @@
       </div>
 
       <!-- การ์ดตัวอย่าง 2 ใบ -->
-      <div class="hero-cards rise">
+      <!-- ถ้ามีกิจกรรมที่เปิดรับอยู่ JavaScript จะเปลี่ยนเป็นกิจกรรมจริง 2 อันที่ใกล้ที่สุด -->
+      <div class="hero-cards rise" id="heroCards">
         <div class="card-wrap">
           <a class="card" href="login.html">
             <div class="poster c-aca">
@@ -124,6 +125,13 @@
   if (getCurrentUser()) {
     document.getElementById("topActions").innerHTML =
       '<a class="btn primary sm" href="events.html">ไปหน้ากิจกรรม <i class="icon icon-18 i-arrow-right"></i></a>';
+  }
+
+  // การ์ดตัวอย่าง: ใช้กิจกรรมที่เปิดรับอยู่จริง (วันที่และจำนวนที่ว่างจะตรงเสมอ)
+  // ถ้ายังไม่ล็อกอิน กดการ์ดแล้วหน้า event.html จะพาไปหน้าเข้าสู่ระบบเอง
+  const heroEvents = sortByDate(getEvents().filter(isOpen)).slice(0, 2);
+  if (heroEvents.length > 0) {
+    document.getElementById("heroCards").innerHTML = heroEvents.map(e => cardHTML(e)).join("");
   }
 </script>
 

@@ -93,11 +93,12 @@
     document.getElementById("detailBox").hidden = !news.detail;
 
     // ปุ่มลิงก์ที่เกี่ยวข้อง: ลิงก์ภายนอก (http...) เปิดในแท็บใหม่
-    if (news.link) {
+    // (ลิงก์ที่ไม่ปลอดภัย เช่น "javascript:..." จะไม่แสดงปุ่ม)
+    if (news.link && isSafeLink(news.link)) {
       const linkBtn = document.getElementById("linkBtn");
       linkBtn.href = news.link;
       linkBtn.hidden = false;
-      if (news.link.startsWith("http")) {
+      if (isWebLink(news.link)) {
         linkBtn.target = "_blank";
         linkBtn.rel = "noopener";
         linkBtn.innerHTML = '<i class="icon icon-18 i-link"></i> เปิดลิงก์ที่เกี่ยวข้อง';

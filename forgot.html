@@ -52,7 +52,7 @@
     e.preventDefault();
     const email = form.elements.email.value.trim().toLowerCase();
 
-    if (!email.endsWith("@spumail.net")) {
+    if (!isSpuEmail(email)) {
       showFormError(form, "กรุณาใช้อีเมลมหาวิทยาลัย (@spumail.net)");
       return;
     }

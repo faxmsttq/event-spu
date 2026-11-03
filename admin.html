@@ -286,6 +286,11 @@
       showFormError(newsForm, "กรุณากรอกหัวข้อและข้อความสั้น");
       return;
     }
+    const link = f.link.value.trim();
+    if (link !== "" && !isSafeLink(link)) {
+      showFormError(newsForm, "ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https:// หรือเป็นหน้าในเว็บ เช่น event.html?id=e2");
+      return;
+    }
 
     const news = getNews();
     news.unshift({
@@ -296,7 +301,7 @@
       text: f.text.value.trim(),
       detail: f.detail.value.trim(),
       image: posterImage,
-      link: f.link.value.trim()
+      link: link
     });
 
     // ถ้าพื้นที่ localStorage เต็ม (รูปใหญ่/เยอะเกินไป) จะบันทึกไม่ได้

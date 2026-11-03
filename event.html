@@ -154,8 +154,9 @@
 
     // ปุ่มแบบฟอร์มสมัคร (แสดงเมื่อผู้จัดแนบลิงก์ไว้)
     const formBtn = document.getElementById("formBtn");
-    formBtn.href = event.formLink || "";
-    formBtn.hidden = !event.formLink;
+    const hasForm = isWebLink(event.formLink || "");
+    formBtn.href = hasForm ? event.formLink : "#";
+    formBtn.hidden = !hasForm;
 
     // แถบความคืบหน้า = จำนวนคนเข้าร่วม ÷ จำนวนที่รับ
     const percent = Math.min(100, Math.round(event.joined / event.cap * 100));
@@ -210,7 +211,7 @@
     // รายชื่อ: ถ้าผู้สมัครปิด "แสดงชื่อและคณะต่อผู้จัด" จะไม่แสดงชื่อ
     document.getElementById("people").innerHTML = people.map(function (u) {
       if (!u.showName) return '<li><span class="avatar">?</span>ไม่เปิดเผยชื่อ</li>';
-      const pic = u.photo ? `<img src="${u.photo}" alt="">` : safe(u.first[0]);
+      const pic = u.photo ? `<img src="${u.photo}" alt="">` : safe(initialOf(u.first));
       return `<li><span class="avatar">${pic}</span>${safe(u.first + " " + u.last)} · <span class="muted">${safe(u.faculty)}</span></li>`;
     }).join("") || '<li class="muted">ยังไม่มีผู้สมัครผ่านระบบ</li>';
 
@@ -223,6 +224,7 @@
   // ดาวน์โหลดรายชื่อเป็นไฟล์ CSV (เปิดใน Excel / Google Sheets ได้)
   document.getElementById("csvBtn").addEventListener("click", function () {
     const event = getEventById(eventId);
+    if (!event) return showEvent(); // ถูกลบไปแล้วจากแท็บอื่น
     const rows = [["ชื่อ", "นามสกุล", "รหัสนักศึกษา", "คณะ", "ชั้นปี", "อีเมล"]];
     getParticipants(event).forEach(function (u) {
       if (u.showName) rows.push([u.first, u.last, u.studentId, u.faculty, u.year, u.email]);
@@ -230,18 +232,22 @@
     });
 
     // ใส่ "..." ครอบทุกช่อง กันเครื่องหมาย , ในข้อมูล
-    const text = rows.map(r => r.map(v => '"' + String(v).replaceAll('"', '""') + '"').join(",")).join("\r\n");
-    const file = new Blob(["﻿" + text], { type: "text/csv" }); // ﻿ ช่วยให้ Excel อ่านภาษาไทยถูก
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(file);
-    link.download = "รายชื่อ-" + event.title + ".csv";
-    link.click();
+    // ข้อมูลที่ขึ้นต้นด้วย = + - @ จะถูก Excel มองเป็นสูตร จึงเติม ' ข้างหน้า
+    function cell(value) {
+      let v = String(value);
+      if (/^[=+\-@\t\r]/.test(v)) v = "'" + v;
+      return '"' + v.replaceAll('"', '""') + '"';
+    }
+    const text = rows.map(r => r.map(cell).join(",")).join("\r\n");
+    const file = new Blob(["﻿" + text], { type: "text/csv;charset=utf-8" }); // ﻿ (BOM) ช่วยให้ Excel อ่านภาษาไทยถูก
+    downloadFile(file, "รายชื่อ-" + event.title + ".csv");
     showToast("ดาวน์โหลดรายชื่อแล้ว");
   });
 
   // ปิด / เปิดรับสมัคร
   document.getElementById("toggleBtn").addEventListener("click", function () {
     const event = getEventById(eventId);
+    if (!event) return showEvent();
     event.status = event.status === "open" ? "closed" : "open";
     updateEvent(event);
     showToast(event.status === "open" ? "เปิดรับสมัครแล้ว" : "ปิดรับสมัครแล้ว");
@@ -266,17 +272,23 @@
   // กด "เข้าร่วมกิจกรรม"
   joinBtn.addEventListener("click", function () {
     const event = getEventById(eventId);
-    if (!isOpen(event)) {
-      showToast("กิจกรรมนี้ปิดรับสมัครแล้ว");
+    if (!event || !isOpen(event)) {
+      showToast(event ? "กิจกรรมนี้ปิดรับสมัครแล้ว" : "ไม่พบกิจกรรมนี้แล้ว");
       showEvent();
       return;
     }
     if (!confirm("ยืนยันเข้าร่วม \"" + event.title + "\" ใช่ไหม?")) return;
 
+    // อ่านข้อมูลล่าสุดอีกครั้ง (อาจเปิดหลายแท็บ หรือที่นั่งเต็มระหว่างรอยืนยัน)
+    const latest = getEventById(eventId);
     const user = getCurrentUser();
-    event.joined = event.joined + 1;
-    user.joined.push(event.id);
-    updateEvent(event);
+    if (!latest || !isOpen(latest) || user.joined.includes(eventId)) {
+      showEvent();
+      return;
+    }
+    latest.joined = latest.joined + 1;
+    user.joined.push(latest.id);
+    updateEvent(latest);
     updateCurrentUser(user);
 
     showToast("เข้าร่วมกิจกรรมแล้ว เจอกันที่งานนะ");
@@ -289,7 +301,12 @@
 
     const event = getEventById(eventId);
     const user = getCurrentUser();
-    event.joined = event.joined - 1;
+    // กิจกรรมถูกลบ หรือยกเลิกไปแล้วจากแท็บอื่น
+    if (!event || !user.joined.includes(eventId)) {
+      showEvent();
+      return;
+    }
+    event.joined = Math.max(0, event.joined - 1);
     user.joined = user.joined.filter(id => id !== event.id);
     updateEvent(event);
     updateCurrentUser(user);
@@ -317,24 +334,42 @@
   // กด "เพิ่มลงปฏิทิน": สร้างไฟล์ .ics ให้ดาวน์โหลด (เปิดได้ใน Google Calendar / ปฏิทินมือถือ)
   document.getElementById("calendarBtn").addEventListener("click", function () {
     const event = getEventById(eventId);
-    const day = event.date.replaceAll("-", "");
+    if (!event) return showEvent();
+
+    // เวลาในไฟล์ใช้แบบ UTC (ลงท้าย Z) เวลาไทย = UTC+7 ตลอดปี
+    // "2026-11-14" + "13:00" → "20261114T060000Z"
+    function icsTime(date) {
+      return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+    }
+    function bangkok(dateText, timeText) {
+      return new Date(dateText + "T" + timeText + ":00+07:00");
+    }
+    // ข้อความในไฟล์ .ics ต้อง escape \ ; , และขึ้นบรรทัดใหม่
+    function icsText(text) {
+      return String(text || "")
+        .replaceAll("\\", "\\\\")
+        .replaceAll(";", "\\;")
+        .replaceAll(",", "\\,")
+        .replace(/\r?\n/g, "\\n");
+    }
+
     const lines = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
+      "PRODID:-//SPU Event//TH",
       "BEGIN:VEVENT",
       "UID:" + event.id + "@spu-event",
-      "DTSTART:" + day + "T" + event.start.replace(":", "") + "00",
-      "DTEND:" + day + "T" + event.end.replace(":", "") + "00",
-      "SUMMARY:" + event.title,
-      "LOCATION:" + event.place,
+      "DTSTAMP:" + icsTime(new Date()),
+      "DTSTART:" + icsTime(bangkok(event.date, event.start)),
+      "DTEND:" + icsTime(bangkok(event.date, event.end)),
+      "SUMMARY:" + icsText(event.title),
+      "LOCATION:" + icsText(event.place),
+      "DESCRIPTION:" + icsText(event.desc),
       "END:VEVENT",
       "END:VCALENDAR"
     ];
-    const file = new Blob([lines.join("\r\n")], { type: "text/calendar" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(file);
-    link.download = event.id + ".ics";
-    link.click();
+    const file = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+    downloadFile(file, event.id + ".ics");
     showToast("ดาวน์โหลดไฟล์ปฏิทินแล้ว");
   });
 

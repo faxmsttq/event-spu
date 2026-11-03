@@ -198,13 +198,14 @@
     if (step === 1) {
       if (f.title.value.trim() === "") return "กรุณากรอกชื่อกิจกรรม";
       const link = f.formLink.value.trim();
-      if (link !== "" && !link.startsWith("http")) return "ลิงก์แบบฟอร์มต้องขึ้นต้นด้วย http:// หรือ https://";
+      if (link !== "" && !isWebLink(link)) return "ลิงก์แบบฟอร์มต้องขึ้นต้นด้วย http:// หรือ https://";
     }
     if (step === 2) {
       if (f.date.value === "") return "กรุณาเลือกวันที่";
       if (f.date.value < today()) return "วันที่ต้องไม่ย้อนหลัง";
       if (!(Number(f.cap.value) >= 1)) return "จำนวนที่รับต้องมีอย่างน้อย 1 คน";
       if (f.start.value === "" || f.end.value === "" || f.start.value >= f.end.value) return "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม";
+      if (f.date.value === today() && f.end.value <= nowTime()) return "เวลาสิ้นสุดของวันนี้ผ่านไปแล้ว กรุณาเลือกเวลาใหม่";
       if (f.place.value.trim() === "") return "กรุณากรอกสถานที่";
       if (f.organizer.value.trim() === "") return "กรุณากรอกเจ้าภาพที่จัด";
       if (f.contactName.value.trim() === "") return "กรุณากรอกชื่อผู้ติดต่อ";

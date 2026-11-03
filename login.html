@@ -77,23 +77,39 @@
       return;
     }
 
-    login(user.email);
-    toastOnNextPage("ยินดีต้อนรับ " + user.first);
-    // แอดมินไปหน้าจัดการระบบ นักศึกษาไปหน้ากิจกรรม
-    location.href = isAdmin(user) ? "admin.html" : "events.html";
+    enter(user);
   });
 
-  // ปุ่ม "ลองใช้บัญชี...": กรอกให้อัตโนมัติแล้วกดเข้าสู่ระบบ
+  // เข้าสู่ระบบสำเร็จ: แอดมินไปหน้าจัดการระบบ นักศึกษาไปหน้ากิจกรรม
+  function enter(user) {
+    login(user.email);
+    toastOnNextPage("ยินดีต้อนรับ " + user.first);
+    location.href = isAdmin(user) ? "admin.html" : "events.html";
+  }
+
+  // ปุ่ม "ลองใช้บัญชี...": เข้าสู่ระบบด้วยบัญชีตัวอย่างทันที
+  // (ไม่ตรวจรหัสผ่าน เพราะผู้ใช้อาจเคยเปลี่ยนรหัสของบัญชีตัวอย่างไปแล้ว)
   function useSampleAccount(account) {
-    // ถ้าบัญชีตัวอย่างเคยถูกลบไป ให้สร้างกลับมาใหม่
     const users = getUsers();
-    if (!users.some(u => u.email === account.email)) {
-      users.push(account);
+    let user = users.find(u => u.email === account.email);
+
+    // ถ้าบัญชีตัวอย่างเคยถูกลบไป ให้สร้างกลับมาใหม่
+    if (!user) {
+      user = JSON.parse(JSON.stringify(account)); // สำเนา ไม่แก้ค่าต้นฉบับ
+      const events = getEvents();
+      // เก็บเฉพาะกิจกรรมที่ยังมีอยู่ และคืนที่นั่งให้กิจกรรมที่เข้าร่วม (ถ้ายังมีที่ว่าง)
+      user.saved = user.saved.filter(id => events.some(e => e.id === id));
+      user.joined = user.joined.filter(function (id) {
+        const event = events.find(e => e.id === id);
+        if (!event || event.joined >= event.cap) return false;
+        event.joined = event.joined + 1;
+        return true;
+      });
+      saveEvents(events);
+      users.push(user);
       saveUsers(users);
     }
-    form.elements.email.value = account.email;
-    form.elements.password.value = account.password;
-    form.requestSubmit();
+    enter(user);
   }
   document.getElementById("demoBtn").addEventListener("click", () => useSampleAccount(SAMPLE_USER));
   document.getElementById("adminDemoBtn").addEventListener("click", () => useSampleAccount(SAMPLE_ADMIN));

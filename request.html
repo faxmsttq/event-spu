@@ -44,16 +44,8 @@
 
       <label class="field">
         <span>ส่งถึงคณบดี</span>
-        <select name="toFaculty">
-          <option>คณะบริหารธุรกิจ</option>
-          <option>คณะบัญชี</option>
-          <option>คณะนิเทศศาสตร์</option>
-          <option>คณะเทคโนโลยีสารสนเทศ</option>
-          <option>คณะวิศวกรรมศาสตร์</option>
-          <option>คณะนิติศาสตร์</option>
-          <option>คณะศิลปศาสตร์</option>
-          <option>วิทยาลัยการบินนานาชาติ</option>
-        </select>
+        <!-- รายชื่อคณะมาจาก FACULTIES ใน common.js -->
+        <select name="toFaculty" data-faculties></select>
       </label>
       <label class="field"><span>ชื่อกิจกรรม</span><input name="title" type="text" maxlength="80" placeholder="เช่น ประกวดถ่ายภาพ SPU Campus"></label>
       <label class="field"><span>รายละเอียดและวัตถุประสงค์</span><textarea name="desc" rows="4" maxlength="600" placeholder="จัดกิจกรรมอะไร เพื่ออะไร"></textarea></label>
@@ -99,12 +91,16 @@
   const FIELDS = ["toFaculty", "title", "desc", "date", "start", "end", "place", "organizer", "payer", "budget", "people"];
 
   f.date.min = today();
-  f.toFaculty.value = user.faculty; // ส่งถึงคณบดีคณะของตัวเองเป็นค่าเริ่มต้น
+  // ส่งถึงคณบดีคณะของตัวเองเป็นค่าเริ่มต้น (ถ้าคณะของผู้ใช้ไม่อยู่ในรายการ เช่น แอดมิน ใช้คณะแรกแทน)
+  if (FACULTIES.includes(user.faculty)) f.toFaculty.value = user.faculty;
 
   // ถ้าลิงก์เป็น request.html?id=r3 = แก้ไขคำขอที่ไม่อนุมัติ
   let editing = getRequestById(new URLSearchParams(location.search).get("id"));
   if (editing && editing.createdBy === user.email && editing.status === "rejected") {
-    FIELDS.forEach(name => f[name].value = editing[name] || "");
+    FIELDS.forEach(function (name) {
+      if (name === "toFaculty") setSelectValue(f.toFaculty, editing.toFaculty); // คำขอเก่าอาจใช้ชื่อคณะเดิม
+      else f[name].value = editing[name] || "";
+    });
     document.getElementById("heading").textContent = "แก้ไขคำขอแล้วส่งใหม่";
     document.getElementById("submitBtn").innerHTML = '<i class="icon icon-18 i-send"></i>ส่งใหม่';
     const note = document.getElementById("rejectNote");
@@ -121,6 +117,7 @@
     if (d.date === "") return "กรุณาเลือกวันที่";
     if (d.date < today()) return "วันที่ต้องไม่ย้อนหลัง";
     if (d.start === "" || d.end === "" || d.start >= d.end) return "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม";
+    if (d.date === today() && d.end <= nowTime()) return "เวลาสิ้นสุดของวันนี้ผ่านไปแล้ว กรุณาเลือกเวลาใหม่";
     if (d.place === "") return "กรุณากรอกสถานที่";
     if (d.organizer === "") return "กรุณากรอกผู้จัดงาน";
     if (d.payer === "") return "กรุณากรอกผู้รับผิดชอบค่าใช้จ่าย";

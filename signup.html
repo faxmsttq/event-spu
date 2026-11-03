@@ -38,15 +38,9 @@
         <div class="two">
           <label class="field">
             <span>คณะ/สาขา</span>
-            <select name="faculty">
-              <option>คณะบริหารธุรกิจ</option>
-              <option>คณะบัญชี</option>
-              <option selected>คณะนิเทศศาสตร์</option>
-              <option>คณะเทคโนโลยีสารสนเทศ</option>
-              <option>คณะวิศวกรรมศาสตร์</option>
-              <option>คณะนิติศาสตร์</option>
-              <option>คณะศิลปศาสตร์</option>
-              <option>วิทยาลัยการบินนานาชาติ</option>
+            <!-- รายชื่อคณะมาจาก FACULTIES ใน common.js -->
+            <select name="faculty" data-faculties>
+              <option value="">-- เลือกคณะ --</option>
             </select>
           </label>
           <label class="field">
@@ -90,7 +84,8 @@
   function checkForm(data) {
     if (data.first === "" || data.last === "") return "กรุณากรอกชื่อและนามสกุล";
     if (!/^\d{8}$/.test(data.studentId)) return "รหัสนักศึกษาต้องเป็นตัวเลข 8 หลัก";
-    if (!data.email.endsWith("@spumail.net")) return "กรุณาใช้อีเมลมหาวิทยาลัย (@spumail.net)";
+    if (data.faculty === "") return "กรุณาเลือกคณะ";
+    if (!isSpuEmail(data.email)) return "กรุณาใช้อีเมลมหาวิทยาลัย (@spumail.net)";
     if (getUsers().some(u => u.email === data.email)) return "อีเมลนี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบแทน";
     if (data.password.length < 8) return "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร";
     if (data.password !== data.confirm) return "ยืนยันรหัสผ่านไม่ตรงกัน";

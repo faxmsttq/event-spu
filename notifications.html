@@ -44,7 +44,6 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
-  // ===== หน้าแจ้งเตือน =====
   // สร้างแจ้งเตือนจากข้อมูลที่มี: กิจกรรมที่ใกล้ถึง และสถานะคำขอจัดกิจกรรม
   const user = requireLogin();
   const notifications = [];
@@ -79,11 +78,33 @@
     });
   });
 
-  // แอดมิน: เตือนคำขอที่ยังรอพิจารณา
+  // กิจกรรมที่เราสร้าง ซึ่งยังรอแอดมิน หรือแอดมินไม่อนุมัติ
+  getEvents().filter(e => e.createdBy === user.email && !isPublished(e)).forEach(function (e) {
+    notifications.push({
+      icon: "i-clip",
+      title: e.status === "pending" ? "กิจกรรม \"" + e.title + "\" รอแอดมินอนุมัติ" : "แอดมินไม่อนุมัติ \"" + e.title + "\"",
+      text: e.status === "pending" ? "อนุมัติแล้วกิจกรรมจะเปิดรับสมัครทันที" : "เหตุผล: " + (e.rejectNote || "-"),
+      link: "event.html?id=" + e.id
+    });
+  });
+
+  // อาจารย์ / เจ้าหน้าที่: คำขอของคณะตัวเองที่ยังรอพิจารณา
+  if (isStaff(user)) {
+    const waiting = getRequests().filter(r => r.toFaculty === user.faculty && (r.status === "sending" || r.status === "processing")).length;
+    if (waiting > 0) {
+      notifications.unshift({ icon: "i-shield", title: "มีคำขอรอพิจารณา " + waiting + " รายการ", text: "คำขอที่ส่งถึงคณบดี" + user.faculty, link: "review.html" });
+    }
+  }
+
+  // แอดมิน: เตือนงานที่ค้างอยู่
   if (isAdmin(user)) {
     const waiting = getRequests().filter(r => r.status === "sending" || r.status === "processing").length;
     if (waiting > 0) {
       notifications.unshift({ icon: "i-shield", title: "มีคำขอรอพิจารณา " + waiting + " รายการ", text: "ไปที่หน้าจัดการระบบเพื่ออนุมัติหรือไม่อนุมัติ", link: "admin.html" });
+    }
+    const pending = getEvents().filter(e => e.status === "pending").length;
+    if (pending > 0) {
+      notifications.unshift({ icon: "i-shield", title: "มีกิจกรรมรออนุมัติโพสต์ " + pending + " รายการ", text: "ไปที่หน้าจัดการระบบ แท็บ \"รออนุมัติโพสต์\"", link: "admin.html" });
     }
   }
 
@@ -102,5 +123,6 @@
       <div><b>${safe(n.title)}</b><p class="muted">${safe(n.text)}</p></div>
     </a>`).join("");
 </script>
+<script src="js/lang.js"></script>
 </body>
 </html>

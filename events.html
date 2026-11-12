@@ -9,7 +9,6 @@
 </head>
 <body>
 
-<!-- แถบเมนูด้านบน -->
 <header class="topbar">
   <div class="topbar-in">
     <a class="brand" href="events.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
@@ -58,10 +57,9 @@
 
     <div class="list-head">
       <b id="count">พบ 0 กิจกรรม</b>
-      <button class="link-btn" id="sortBtn">วันที่ใกล้สุด ⌄</button>
+      <button class="link-btn" id="sortBtn">วันที่ใกล้สุด</button>
     </div>
 
-    <!-- การ์ดกิจกรรมจะถูกใส่ตรงนี้ด้วย JavaScript -->
     <div class="grid rise" id="list"></div>
 
     <div class="empty box" id="empty" hidden>
@@ -73,7 +71,6 @@
   </div>
 </main>
 
-<!-- เมนูด้านล่าง (แสดงเฉพาะบนมือถือ) -->
 <nav class="tabbar">
   <a href="events.html" class="on"><i class="icon i-house"></i>กิจกรรม</a>
   <a href="saved.html"><i class="icon i-heart"></i>บันทึกไว้</a>
@@ -85,7 +82,6 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
-  // ===== หน้ากิจกรรม: ค้นหา กรอง และเรียงลำดับ =====
   const user = requireLogin();
   document.getElementById("hello").textContent = "สวัสดี " + user.first;
 
@@ -101,14 +97,14 @@
   let nearestFirst = true; // เรียงวันที่ใกล้สุดก่อน
 
   function showEvents() {
-    // เอาเฉพาะกิจกรรมที่ยังไม่จบ
-    let events = getEvents().filter(e => !isPast(e));
+    let events = getEvents().filter(e => !isPast(e) && isPublished(e));
 
     if (category !== "") {
       events = events.filter(e => e.cat === category);
     }
     if (openOnly) {
-      events = events.filter(e => isOpen(e));
+      // เปิดรับ และคณะของเราลงทะเบียนได้
+      events = events.filter(e => isOpen(e) && facultyAllowed(e, user));
     }
     if (keyword !== "") {
       events = events.filter(e => (e.title + " " + e.place + " " + e.organizer + " " + e.cat + " " + e.desc).toLowerCase().includes(keyword));
@@ -122,13 +118,11 @@
     document.getElementById("empty").hidden = events.length > 0;
   }
 
-  // พิมพ์ค้นหา
   document.getElementById("search").addEventListener("input", function () {
     keyword = this.value.trim().toLowerCase();
     showEvents();
   });
 
-  // กดเลือกหมวดหมู่
   document.querySelectorAll("#catChips .chip").forEach(function (chip) {
     chip.addEventListener("click", function () {
       document.querySelectorAll("#catChips .chip").forEach(c => c.classList.remove("on"));
@@ -138,7 +132,6 @@
     });
   });
 
-  // กด "เฉพาะที่เปิดรับ"
   const openOnlyBtn = document.getElementById("openOnlyBtn");
   openOnlyBtn.addEventListener("click", function () {
     openOnly = !openOnly;
@@ -146,15 +139,13 @@
     showEvents();
   });
 
-  // กดสลับการเรียงวันที่
   const sortBtn = document.getElementById("sortBtn");
   sortBtn.addEventListener("click", function () {
     nearestFirst = !nearestFirst;
-    sortBtn.textContent = nearestFirst ? "วันที่ใกล้สุด ⌄" : "วันที่ไกลสุด ⌄";
+    sortBtn.textContent = nearestFirst ? "วันที่ใกล้สุด" : "วันที่ไกลสุด";
     showEvents();
   });
 
-  // กด "ล้างตัวกรอง"
   document.getElementById("clearBtn").addEventListener("click", function () {
     keyword = "";
     category = "";
@@ -167,5 +158,6 @@
 
   showEvents();
 </script>
+<script src="js/lang.js"></script>
 </body>
 </html>

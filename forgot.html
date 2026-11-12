@@ -35,7 +35,7 @@
           <input name="email" type="email" placeholder="name@spumail.net" autocomplete="email">
         </label>
         <button class="btn primary block lg">ส่งลิงก์</button>
-        <a class="link fit" href="login.html">← กลับไปหน้าเข้าสู่ระบบ</a>
+        <a class="link fit" href="login.html">กลับไปหน้าเข้าสู่ระบบ</a>
       </form>
     </div>
   </main>
@@ -44,7 +44,6 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
-  // ===== หน้าลืมรหัสผ่าน =====
   // ยังไม่มีหลังบ้าน จึงส่งอีเมลจริงไม่ได้ ตอนนี้แค่ตรวจว่ามีบัญชีนี้อยู่จริง
   const form = document.getElementById("forgotForm");
 
@@ -67,5 +66,6 @@
 
   form.addEventListener("input", () => hideFormError(form));
 </script>
+<script src="js/lang.js"></script>
 </body>
 </html>

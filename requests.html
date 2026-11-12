@@ -59,7 +59,6 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
-  // ===== หน้าสถานะคำขอจัดกิจกรรม =====
   const user = requireLogin();
 
   // คำขอของฉัน เรียงจากยื่นล่าสุดก่อน
@@ -79,11 +78,26 @@
       return `<p class="notice err">เหตุผล: ${safe(r.note)}</p>
         <div class="req-acts"><a class="btn primary" href="request.html?id=${r.id}">แก้ไขและส่งใหม่</a></div>`;
     }
-    // อนุมัติแล้ว: ยังไม่สร้างกิจกรรม → ไปหน้าสร้าง / สร้างแล้ว → ดูกิจกรรม
+    // อนุมัติแล้ว และสร้างกิจกรรมไปแล้ว: บอกว่ากิจกรรมนั้นถึงขั้นไหน
     if (r.eventId) {
+      const event = getEventById(r.eventId);
+      if (event && event.status === "pending") {
+        return `<p class="notice">สร้างกิจกรรมแล้ว รอแอดมินอนุมัติโพสต์</p>
+          <div class="req-acts"><a class="btn outline" href="event.html?id=${r.eventId}">ดูกิจกรรม</a></div>`;
+      }
+      if (event && event.status === "rejected") {
+        return `<p class="notice err">แอดมินไม่อนุมัติกิจกรรม: ${safe(event.rejectNote)}</p>
+          <div class="req-acts"><button class="btn primary" onclick="redo('${r.id}')">แก้ไขแล้วส่งใหม่</button></div>`;
+      }
       return `<div class="req-acts"><a class="btn outline" href="event.html?id=${r.eventId}">ดูกิจกรรมที่โพสต์แล้ว</a></div>`;
     }
     return `<div class="req-acts"><a class="btn primary" href="create.html?request=${r.id}">ไปต่อหน้าสร้างกิจกรรม <i class="icon icon-18 i-arrow-right"></i></a></div>`;
+  }
+
+  // กิจกรรมโดนแอดมินปฏิเสธ: ลบอันเดิมทิ้ง แล้วกลับไปกรอกหน้าสร้างกิจกรรมใหม่
+  function redo(requestId) {
+    deleteEvent(getRequestById(requestId).eventId);
+    location.href = "create.html?request=" + requestId;
   }
 
   document.getElementById("list").innerHTML = myRequests.map(r => `
@@ -102,11 +116,13 @@
         <div><dt>ผู้จัดงาน</dt><dd>${safe(r.organizer)}</dd></div>
         <div><dt>ผู้รับผิดชอบค่าใช้จ่าย</dt><dd>${safe(r.payer)}${r.budget ? " · งบ " + r.budget.toLocaleString() + " บาท" : ""}</dd></div>
         <div><dt>จำนวนคน</dt><dd>${r.people} คน</dd></div>
+        <div><dt>ใครลงทะเบียนได้</dt><dd>${safe(facultyText(r))}</dd></div>
       </dl>
       ${actionsHTML(r)}
     </article>`).join("");
 
   document.getElementById("empty").hidden = myRequests.length > 0;
 </script>
+<script src="js/lang.js"></script>
 </body>
 </html>

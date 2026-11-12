@@ -59,17 +59,16 @@
           <label class="field"><span>ชื่อ</span><input name="first" type="text"></label>
           <label class="field"><span>นามสกุล</span><input name="last" type="text"></label>
         </div>
-        <!-- ข้อมูลนักศึกษา (ซ่อนเมื่อเป็นแอดมิน) -->
-        <label class="field student-only"><span>รหัสนักศึกษา</span><input name="studentId" type="text" inputmode="numeric" maxlength="8"></label>
+        <!-- ข้อมูลนักศึกษา: แก้เองไม่ได้ ต้องให้แอดมินแก้ให้ (ซ่อนเมื่อเป็นแอดมิน/อาจารย์) -->
+        <label class="field student-only"><span>รหัสนักศึกษา</span><input name="studentId" type="text" disabled></label>
         <div class="two student-only">
           <label class="field">
             <span>คณะ/สาขา</span>
-            <!-- รายชื่อคณะมาจาก FACULTIES ใน common.js -->
-            <select name="faculty" data-faculties></select>
+            <select name="faculty" data-faculties disabled></select>
           </label>
           <label class="field">
             <span>ชั้นปี</span>
-            <select name="year">
+            <select name="year" disabled>
               <option>ปี 1</option>
               <option>ปี 2</option>
               <option>ปี 3</option>
@@ -78,10 +77,10 @@
             </select>
           </label>
         </div>
+        <small class="muted student-only">ต้องการเปลี่ยนรหัสนักศึกษา คณะ หรือชั้นปี กรุณาติดต่อแอดมิน (ช่องทางติดต่ออยู่ด้านล่าง)</small>
         <button class="btn primary block">บันทึก</button>
       </form>
 
-      <!-- เปลี่ยนรหัสผ่าน -->
       <form class="box stack" id="passwordForm" novalidate>
         <h3>เปลี่ยนรหัสผ่าน</h3>
         <p class="form-err" role="alert" hidden></p>
@@ -99,7 +98,6 @@
         <label class="check"><input type="checkbox" id="notify"> รับการแจ้งเตือนกิจกรรม</label>
       </div>
 
-      <!-- ข้อมูลติดต่อแอดมิน -->
       <div class="box">
         <h3>ติดต่อผู้ดูแลระบบ</h3>
         <p class="muted">มีปัญหาการใช้งาน หรือสอบถามเรื่องคำขอจัดกิจกรรม ติดต่อได้ที่</p>
@@ -127,19 +125,20 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
-  // ===== หน้าโปรไฟล์ =====
   requireLogin();
   const form = document.getElementById("profileForm");
   const f = form.elements;
 
-  // แสดงข้อมูลผู้ใช้ในหน้า
   function showProfile() {
     const user = getCurrentUser();
     showAvatar(document.getElementById("avatar"), user);
     showAvatar(document.getElementById("bigAvatar"), user);
     document.getElementById("removePhotoBtn").hidden = !user.photo;
     document.getElementById("fullName").textContent = user.first + " " + user.last;
-    document.getElementById("idLine").textContent = isAdmin(user) ? "ผู้ดูแลระบบ · " + user.faculty : user.studentId + " · " + user.faculty;
+    let idLine = user.studentId + " · " + user.faculty;
+    if (isAdmin(user)) idLine = "ผู้ดูแลระบบ · " + user.faculty;
+    if (isStaff(user)) idLine = user.position + " · " + user.faculty;
+    document.getElementById("idLine").textContent = idLine;
     document.getElementById("statJoined").textContent = user.joined.length;
     document.getElementById("statSaved").textContent = user.saved.length;
     document.getElementById("statCreated").textContent = getEvents().filter(e => e.createdBy === user.email).length;
@@ -150,15 +149,22 @@
   f.first.value = user.first;
   f.last.value = user.last;
   f.studentId.value = user.studentId;
-  if (!isAdmin(user)) setSelectValue(f.faculty, user.faculty); // แอดมินไม่มีช่องคณะ
+  // แอดมินกับอาจารย์ไม่มีช่องข้อมูลนักศึกษา (คณะของอาจารย์เปลี่ยนเองไม่ได้ เพราะใช้กำหนดสิทธิ์อนุมัติ)
+  const notStudent = isAdmin(user) || isStaff(user);
+  if (!notStudent) setSelectValue(f.faculty, user.faculty);
   f.year.value = user.year;
   document.getElementById("showName").checked = user.showName;
   document.getElementById("notify").checked = user.notify;
   showProfile();
 
   // แอดมิน: แสดงปุ่มจัดการระบบ และซ่อนช่องข้อมูลนักศึกษา
-  document.getElementById("adminLink").hidden = !isAdmin(user);
-  document.querySelectorAll(".student-only").forEach(el => el.hidden = isAdmin(user));
+  const adminLink = document.getElementById("adminLink");
+  adminLink.hidden = !notStudent;
+  if (isStaff(user)) {
+    adminLink.href = "review.html";
+    adminLink.innerHTML = '<i class="icon icon-18 i-shield"></i> พิจารณาคำขอของคณะ';
+  }
+  document.querySelectorAll(".student-only").forEach(el => el.hidden = notStudent);
 
   // ข้อมูลติดต่อแอดมิน (มาจาก ADMIN_CONTACT ใน common.js)
   document.getElementById("adminName").textContent = ADMIN_CONTACT.name;
@@ -169,31 +175,19 @@
   document.getElementById("adminHours").textContent = ADMIN_CONTACT.hours;
   document.getElementById("adminPlace").textContent = ADMIN_CONTACT.place;
 
-  // กด "บันทึก"
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     const first = f.first.value.trim();
     const last = f.last.value.trim();
-    const studentId = f.studentId.value.trim();
-
     if (first === "" || last === "") {
       showFormError(form, "กรุณากรอกชื่อและนามสกุล");
       return;
     }
+
+    // เปลี่ยนได้แค่ชื่อ-นามสกุล ส่วนรหัสนักศึกษา คณะ ชั้นปี แอดมินเป็นคนแก้ให้
     const user = getCurrentUser();
     user.first = first;
     user.last = last;
-
-    // ข้อมูลนักศึกษา (แอดมินไม่มีช่องนี้)
-    if (!isAdmin(user)) {
-      if (!/^\d{8}$/.test(studentId)) {
-        showFormError(form, "รหัสนักศึกษาต้องเป็นตัวเลข 8 หลัก");
-        return;
-      }
-      user.studentId = studentId;
-      user.faculty = f.faculty.value;
-      user.year = f.year.value;
-    }
     updateCurrentUser(user);
 
     showProfile();
@@ -201,7 +195,6 @@
   });
   form.addEventListener("input", () => hideFormError(form));
 
-  // เปลี่ยนรหัสผ่าน
   const passwordForm = document.getElementById("passwordForm");
   passwordForm.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -283,7 +276,6 @@
     });
   });
 
-  // ออกจากระบบ
   document.getElementById("logoutBtn").addEventListener("click", function () {
     if (!confirm("คุณต้องการออกจากระบบใช่ไหม?")) return;
     logout();
@@ -319,5 +311,6 @@
     location.href = "index.html";
   });
 </script>
+<script src="js/lang.js"></script>
 </body>
 </html>

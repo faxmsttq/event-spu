@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สมัครอาจารย์ / เจ้าหน้าที่ · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth">
+  <aside class="auth-side">
+    <div class="rise">
+      <a class="brand dark" href="index.html"><i class="icon icon-28 i-cal"></i>SPU EVENT</a>
+      <h1>สมัครสำหรับอาจารย์และเจ้าหน้าที่</h1>
+      <ul class="checks">
+        <li><i class="icon i-check"></i>ใช้อีเมลบุคลากร @spumail.ac.th</li>
+        <li><i class="icon i-check"></i>เลือกคณะที่สังกัด</li>
+        <li><i class="icon i-check"></i>อนุมัติได้เฉพาะคำขอของคณะตัวเอง</li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="auth-main">
+    <div class="auth-form">
+      <form id="signupForm" class="stack rise" novalidate>
+        <h2>สมัครอาจารย์ / เจ้าหน้าที่</h2>
+        <p class="form-err" role="alert" hidden></p>
+        <div class="field">
+          <span>ตำแหน่ง</span>
+          <div class="chips">
+            <label class="chip"><input type="radio" name="position" value="อาจารย์" checked>อาจารย์</label>
+            <label class="chip"><input type="radio" name="position" value="เจ้าหน้าที่">เจ้าหน้าที่</label>
+          </div>
+        </div>
+        <div class="two">
+          <label class="field"><span>ชื่อ</span><input name="first" type="text" autocomplete="given-name"></label>
+          <label class="field"><span>นามสกุล</span><input name="last" type="text" autocomplete="family-name"></label>
+        </div>
+        <label class="field">
+          <span>สังกัดคณะ</span>
+          <select name="faculty" data-faculties>
+            <option value="">-- เลือกคณะ --</option>
+          </select>
+          <small class="muted">อนุมัติได้เฉพาะคำขอที่ส่งถึงคณะนี้ เปลี่ยนภายหลังต้องติดต่อแอดมิน</small>
+        </label>
+        <label class="field">
+          <span>อีเมลบุคลากร</span>
+          <input name="email" type="email" placeholder="name@spumail.ac.th" autocomplete="email">
+        </label>
+        <label class="field">
+          <span>รหัสผ่าน (อย่างน้อย 8 ตัว)</span>
+          <input name="password" type="password" autocomplete="new-password">
+        </label>
+        <label class="field">
+          <span>ยืนยันรหัสผ่าน</span>
+          <input name="confirm" type="password" autocomplete="new-password">
+        </label>
+        <button class="btn primary block lg">สมัคร</button>
+        <p class="muted">มีบัญชีอยู่แล้ว? <a class="link strong" href="staff-login.html">เข้าสู่ระบบ</a></p>
+      </form>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  const form = document.getElementById("signupForm");
+
+  function checkForm(d) {
+    if (d.first === "" || d.last === "") return "กรุณากรอกชื่อและนามสกุล";
+    if (d.faculty === "") return "กรุณาเลือกคณะ";
+    if (!isStaffEmail(d.email)) return "กรุณาใช้อีเมลบุคลากร (@spumail.ac.th)";
+    if (getUsers().some(u => u.email === d.email)) return "อีเมลนี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบแทน";
+    if (d.password.length < 8) return "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร";
+    if (d.password !== d.confirm) return "ยืนยันรหัสผ่านไม่ตรงกัน";
+    return "";
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const f = form.elements;
+    const data = {
+      position: f.position.value,
+      first: f.first.value.trim(),
+      last: f.last.value.trim(),
+      faculty: f.faculty.value,
+      email: f.email.value.trim().toLowerCase(),
+      password: f.password.value,
+      confirm: f.confirm.value
+    };
+
+    const error = checkForm(data);
+    if (error !== "") {
+      showFormError(form, error);
+      return;
+    }
+
+    const users = getUsers();
+    users.push({
+      email: data.email, password: data.password, role: "staff", position: data.position,
+      first: data.first, last: data.last, studentId: "", faculty: data.faculty, year: "",
+      showName: true, notify: true, saved: [], joined: []
+    });
+    saveUsers(users);
+
+    login(data.email);
+    toastOnNextPage("สมัครสมาชิกสำเร็จ ยินดีต้อนรับ " + data.first);
+    location.href = "review.html";
+  });
+
+  form.addEventListener("input", () => hideFormError(form));
+</script>
+<script src="js/lang.js"></script>
+</body>
+</html>

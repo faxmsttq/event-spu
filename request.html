@@ -65,6 +65,19 @@
         <label class="field"><span>งบประมาณ (บาท)</span><input name="budget" type="number" min="0" placeholder="ไม่มีให้เว้นว่าง"></label>
       </div>
 
+      <!-- ล็อกให้ลงทะเบียนได้เฉพาะบางคณะ (ค่านี้จะติดไปหน้าสร้างกิจกรรมด้วย) -->
+      <div class="field">
+        <span>ใครลงทะเบียนได้</span>
+        <div class="chips">
+          <label class="chip"><input type="radio" name="audience" value="all" checked>ทุกคณะลงทะเบียนได้</label>
+          <label class="chip"><input type="radio" name="audience" value="faculty"><i class="icon icon-16 i-lock"></i>&nbsp;เฉพาะคณะที่เลือก</label>
+        </div>
+      </div>
+      <div class="stack" id="facultyBox" hidden>
+        <div class="faculty-list" id="facultyList"></div>
+        <small class="muted">เลือกได้หลายคณะ นักศึกษาคณะอื่นจะเห็นกิจกรรม แต่กดลงทะเบียนไม่ได้</small>
+      </div>
+
       <div class="form-acts">
         <a class="btn ghost" href="requests.html">ยกเลิก</a>
         <button class="btn primary" id="submitBtn"><i class="icon icon-18 i-send"></i>ส่งคำขอ</button>
@@ -84,7 +97,6 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
-  // ===== หน้ายื่นคำขอจัดกิจกรรม (ใช้ทั้งยื่นใหม่ และแก้ไขคำขอที่ไม่อนุมัติ) =====
   const user = requireLogin();
   const form = document.getElementById("requestForm");
   const f = form.elements;
@@ -110,6 +122,8 @@
     editing = null;
   }
 
+  setupFacultyPicker(form, editing && editing.faculties ? editing.faculties : []);
+
   // ตรวจข้อมูล ถ้าผิดคืนข้อความ error
   function checkForm(d) {
     if (d.title === "") return "กรุณากรอกชื่อกิจกรรม";
@@ -123,6 +137,7 @@
     if (d.payer === "") return "กรุณากรอกผู้รับผิดชอบค่าใช้จ่าย";
     if (!(d.people >= 1)) return "จำนวนคนต้องมีอย่างน้อย 1 คน";
     if (d.budget < 0) return "งบประมาณต้องไม่ติดลบ";
+    if (f.audience.value === "faculty" && d.faculties.length === 0) return "กรุณาเลือกอย่างน้อย 1 คณะ";
     return "";
   }
 
@@ -140,7 +155,8 @@
       organizer: f.organizer.value.trim(),
       payer: f.payer.value.trim(),
       budget: Number(f.budget.value),
-      people: Number(f.people.value)
+      people: Number(f.people.value),
+      faculties: pickedFaculties(form)
     };
 
     const error = checkForm(data);
@@ -150,7 +166,7 @@
     }
 
     // ส่งแล้วสถานะเริ่มที่ "กำลังส่ง" เสมอ
-    const status = { status: "sending", note: "", submittedAt: today() };
+    const status = { status: "sending", note: "", reviewedBy: "", submittedAt: today() };
 
     if (editing) {
       updateRequest(Object.assign(editing, data, status));
@@ -166,5 +182,6 @@
 
   form.addEventListener("input", () => hideFormError(form));
 </script>
+<script src="js/lang.js"></script>
 </body>
 </html>

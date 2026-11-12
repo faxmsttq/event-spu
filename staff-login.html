@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เข้าสู่ระบบอาจารย์ / เจ้าหน้าที่ · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="auth">
+  <aside class="auth-side">
+    <div class="rise">
+      <a class="brand dark" href="index.html"><i class="icon icon-28 i-cal"></i>SPU EVENT</a>
+      <h1>สำหรับอาจารย์และเจ้าหน้าที่</h1>
+      <ul class="checks">
+        <li><i class="icon i-check"></i>ดูคำขอจัดกิจกรรมของคณะ</li>
+        <li><i class="icon i-check"></i>อนุมัติหรือไม่อนุมัติคำขอ</li>
+        <li><i class="icon i-check"></i>เห็นเฉพาะคำขอที่ส่งถึงคณะของคุณ</li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="auth-main">
+    <div class="auth-form">
+      <form id="loginForm" class="stack rise" novalidate>
+        <div>
+          <h2>เข้าสู่ระบบอาจารย์ / เจ้าหน้าที่</h2>
+          <p class="muted">ใช้อีเมลบุคลากร @spumail.ac.th</p>
+        </div>
+        <p class="form-err" role="alert" hidden></p>
+        <label class="field">
+          <span>อีเมลบุคลากร</span>
+          <input name="email" type="email" placeholder="name@spumail.ac.th" autocomplete="email">
+        </label>
+        <label class="field">
+          <span>รหัสผ่าน</span>
+          <input name="password" type="password" autocomplete="current-password">
+        </label>
+        <button class="btn primary block lg">เข้าสู่ระบบ</button>
+        <button type="button" class="btn ghost block" id="demoBtn">ลองใช้บัญชีอาจารย์ตัวอย่าง</button>
+        <p class="muted">ยังไม่มีบัญชี? <a class="link strong" href="staff-signup.html">สมัครสำหรับอาจารย์ / เจ้าหน้าที่</a></p>
+        <p class="muted">เป็นนักศึกษา? <a class="link strong" href="login.html">เข้าสู่ระบบนักศึกษา</a></p>
+      </form>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  const form = document.getElementById("loginForm");
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const email = form.elements.email.value.trim().toLowerCase();
+    const password = form.elements.password.value;
+
+    if (!isStaffEmail(email)) {
+      showFormError(form, "กรุณาใช้อีเมลบุคลากร (@spumail.ac.th)");
+      return;
+    }
+    const user = getUsers().find(u => u.email === email && u.password === password);
+    if (!user || !isStaff(user)) {
+      showFormError(form, "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      return;
+    }
+
+    login(user.email);
+    toastOnNextPage("ยินดีต้อนรับ " + user.first);
+    location.href = "review.html";
+  });
+
+  // บัญชีอาจารย์ตัวอย่าง (ถ้าเคยถูกลบไป ให้สร้างกลับมา)
+  document.getElementById("demoBtn").addEventListener("click", function () {
+    const users = getUsers();
+    if (!users.some(u => u.email === SAMPLE_STAFF.email)) {
+      users.push(JSON.parse(JSON.stringify(SAMPLE_STAFF)));
+      saveUsers(users);
+    }
+    login(SAMPLE_STAFF.email);
+    toastOnNextPage("ยินดีต้อนรับ " + SAMPLE_STAFF.first);
+    location.href = "review.html";
+  });
+
+  form.addEventListener("input", () => hideFormError(form));
+</script>
+<script src="js/lang.js"></script>
+</body>
+</html>

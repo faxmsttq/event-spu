@@ -67,7 +67,6 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
-  // ===== หน้ารายละเอียดประกาศ / ประชาสัมพันธ์ (เช่น news.html?id=n1) =====
   const user = requireLogin();
   const id = new URLSearchParams(location.search).get("id");
   const news = getNews().find(n => n.id === id);
@@ -120,5 +119,6 @@
     });
   }
 </script>
+<script src="js/lang.js"></script>
 </body>
 </html>

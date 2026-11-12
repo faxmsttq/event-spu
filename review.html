@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>พิจารณาคำขอ · SPU Event</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- เมนูของอาจารย์ / เจ้าหน้าที่ -->
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="review.html"><i class="icon icon-24 i-cal"></i>SPU EVENT</a>
+    <nav class="nav">
+      <a href="review.html" class="on"><i class="icon icon-18 i-shield"></i>พิจารณาคำขอ</a>
+      <a href="events.html"><i class="icon icon-18 i-house"></i>กิจกรรม</a>
+      <a href="profile.html"><i class="icon icon-18 i-user"></i>โปรไฟล์</a>
+    </nav>
+    <div class="top-actions">
+      <a class="avatar" id="avatar" href="profile.html"></a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="container narrow rise">
+    <div class="page-head">
+      <div>
+        <h1>พิจารณาคำขอจัดกิจกรรม</h1>
+        <p class="muted" id="subtitle"></p>
+      </div>
+    </div>
+
+    <div class="stat-grid" id="stats" style="grid-template-columns: repeat(3, 1fr)"></div>
+
+    <div class="seg" id="tabs">
+      <button data-tab="waiting" class="on">รอพิจารณา <b class="count" id="waitingCount"></b></button>
+      <button data-tab="done">พิจารณาแล้ว</button>
+    </div>
+
+    <div class="stack rise" id="list"></div>
+  </div>
+</main>
+
+<nav class="tabbar">
+  <a href="review.html" class="on"><i class="icon i-shield"></i>พิจารณาคำขอ</a>
+  <a href="events.html"><i class="icon i-house"></i>กิจกรรม</a>
+  <a href="profile.html"><i class="icon i-user"></i>โปรไฟล์</a>
+</nav>
+
+<div id="toast"></div>
+<script src="js/common.js"></script>
+<script>
+  const user = requireStaff();
+  let tab = "waiting";
+
+  document.getElementById("subtitle").textContent =
+    user.position + " · " + user.faculty + " · เห็นและอนุมัติได้เฉพาะคำขอที่ส่งถึงคณบดีคณะนี้";
+
+  // คำขอของคณะตัวเองเท่านั้น
+  function myFacultyRequests() {
+    return getRequests().filter(r => r.toFaculty === user.faculty);
+  }
+
+  function isWaiting(r) {
+    return r.status === "sending" || r.status === "processing";
+  }
+
+  function show() {
+    const requests = myFacultyRequests();
+    const waiting = requests.filter(isWaiting);
+    const done = requests.filter(r => !isWaiting(r));
+
+    const stats = [
+      [waiting.length, "รอพิจารณา"],
+      [requests.filter(r => r.status === "approved").length, "อนุมัติแล้ว"],
+      [requests.filter(r => r.status === "rejected").length, "ไม่อนุมัติ"]
+    ];
+    document.getElementById("stats").innerHTML = stats.map(s => `<div class="box"><b>${s[0]}</b><small>${s[1]}</small></div>`).join("");
+    document.getElementById("waitingCount").textContent = waiting.length || "";
+
+    const list = tab === "waiting" ? waiting : done;
+    document.getElementById("list").innerHTML =
+      sortForReview(list).map(reviewCardHTML).join("") ||
+      `<div class="empty box sm"><p class="muted">${tab === "waiting" ? "ไม่มีคำขอรอพิจารณา" : "ยังไม่มีคำขอที่พิจารณาแล้ว"}</p></div>`;
+  }
+
+  // ปุ่มในการ์ดคำขอเรียกฟังก์ชันนี้ (reviewRequest เช็กอีกรอบว่าเป็นคณะเดียวกัน)
+  function setStatus(id, status) {
+    if (reviewRequest(id, status)) show();
+  }
+
+  document.querySelectorAll("#tabs button").forEach(function (button) {
+    button.addEventListener("click", function () {
+      tab = button.dataset.tab;
+      document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b === button));
+      show();
+    });
+  });
+
+  show();
+</script>
+<script src="js/lang.js"></script>
+</body>
+</html>

@@ -40,9 +40,16 @@
 
     <div class="seg" id="tabs">
       <button data-tab="requests" class="on">คำขอจัดกิจกรรม</button>
+      <button data-tab="pending">รออนุมัติโพสต์ <b class="count" id="pendingCount"></b></button>
       <button data-tab="events">กิจกรรม</button>
+      <button data-tab="users">ผู้ใช้</button>
       <button data-tab="news">ประกาศ</button>
     </div>
+
+    <!-- กิจกรรมที่นักศึกษาสร้างแล้ว รอแอดมินอนุมัติก่อนโชว์ให้ทุกคนเห็น -->
+    <section id="pendingTab" hidden>
+      <div class="stack rise" id="pendingList"></div>
+    </section>
 
     <!-- แท็บ: กิจกรรมทั้งหมด -->
     <section id="eventsTab" hidden>
@@ -55,6 +62,15 @@
     </section>
 
     <!-- แท็บ 2: ประกาศ / ประชาสัมพันธ์ -->
+    <!-- แท็บ: ผู้ใช้ (นักศึกษาแก้รหัส คณะ ชั้นปีเองไม่ได้ ต้องให้แอดมินแก้ตรงนี้) -->
+    <section id="usersTab" hidden>
+      <label class="search" style="margin-bottom: 16px">
+        <i class="icon i-search"></i>
+        <input id="userSearch" type="search" placeholder="ค้นหาชื่อ อีเมล หรือรหัสนักศึกษา">
+      </label>
+      <div class="stack rise" id="userList"></div>
+    </section>
+
     <section id="newsTab" hidden>
       <form class="box stack" id="newsForm" novalidate>
         <h3>เพิ่มประกาศ / ประชาสัมพันธ์</h3>
@@ -84,7 +100,7 @@
         <label class="field">
           <span>ไฟล์โปสเตอร์ (ถ้ามี)</span>
           <input name="image" type="file" accept="image/*">
-          <small class="muted">รองรับ JPG / PNG รูปจะถูกย่อให้เล็กลงอัตโนมัติ</small>
+          <small class="muted">แนะนำรูปแนวนอน 16:9 เช่น 1200 × 675 พิกเซล (JPG / PNG) รูปจะถูกย่อให้เล็กลงอัตโนมัติ</small>
         </label>
         <img class="img-preview" id="imgPreview" alt="ตัวอย่างโปสเตอร์" hidden>
         <label class="field"><span>ลิงก์ที่เกี่ยวข้อง (ถ้ามี)</span><input name="link" type="text" placeholder="เช่น event.html?id=e2 หรือ https://..."></label>
@@ -108,7 +124,6 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
-  // ===== หน้าจัดการระบบ (เฉพาะแอดมิน) =====
   requireAdmin();
 
   /* ---------- แท็บ ---------- */
@@ -116,7 +131,7 @@
     button.addEventListener("click", function () {
       document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b === button));
       // แสดงเฉพาะ section ที่ชื่อตรงกับแท็บ เช่น data-tab="events" → id="eventsTab"
-      ["requests", "events", "news"].forEach(name => {
+      ["requests", "pending", "events", "users", "news"].forEach(name => {
         document.getElementById(name + "Tab").hidden = button.dataset.tab !== name;
       });
     });
@@ -125,10 +140,10 @@
   /* ---------- ตัวเลขสรุป ---------- */
   function showStats() {
     const waiting = getRequests().filter(r => r.status === "sending" || r.status === "processing").length;
-    const upcoming = getEvents().filter(e => !isPast(e)).length;
+    const pending = getEvents().filter(e => e.status === "pending").length;
     const students = getUsers().filter(u => !isAdmin(u)).length;
     const seats = getEvents().reduce((sum, e) => sum + e.joined, 0);
-    const stats = [[waiting, "คำขอรอพิจารณา"], [upcoming, "กิจกรรมที่กำลังจะมา"], [students, "นักศึกษาในระบบ"], [seats, "ที่นั่งที่ถูกจองแล้ว"]];
+    const stats = [[waiting, "คำขอรอพิจารณา"], [pending, "กิจกรรมรออนุมัติ"], [students, "นักศึกษาในระบบ"], [seats, "ที่นั่งที่ถูกจองแล้ว"]];
     document.getElementById("stats").innerHTML = stats.map(s => `<div class="box"><b>${s[0].toLocaleString()}</b><small>${s[1]}</small></div>`).join("");
   }
 
@@ -143,10 +158,69 @@
         </div>
         <div class="row-acts">
           ${badgeHTML(e)}
-          ${isPast(e) ? "" : `<button class="btn ghost sm" onclick="toggleEvent('${e.id}')">${e.status === "open" ? "ปิดรับสมัคร" : "เปิดรับสมัคร"}</button>`}
+          ${isPast(e) || !isPublished(e) ? "" : `<button class="btn ghost sm" onclick="toggleEvent('${e.id}')">${e.status === "open" ? "ปิดรับสมัคร" : "เปิดรับสมัคร"}</button>`}
           <button class="btn danger-outline sm" onclick="removeEvent('${e.id}')">ลบ</button>
         </div>
       </div>`).join("") || '<div class="empty box sm"><p class="muted">ยังไม่มีกิจกรรม</p></div>';
+  }
+
+  /* ---------- กิจกรรมรออนุมัติโพสต์ ---------- */
+  function showPending() {
+    const events = getEvents().filter(e => e.status === "pending");
+    document.getElementById("pendingCount").textContent = events.length || "";
+    document.getElementById("pendingList").innerHTML = events.map(function (e) {
+      const owner = getUsers().find(u => u.email === e.createdBy);
+      return `
+        <article class="box req">
+          <div class="req-head">
+            <div>
+              <h3><a class="link" href="event.html?id=${e.id}">${safe(e.title)}</a></h3>
+              <small class="muted">โพสต์โดย ${safe(owner ? owner.first + " " + owner.last : e.createdBy)}</small>
+            </div>
+            ${badgeHTML(e)}
+          </div>
+          ${e.image ? `<img class="img-preview" style="margin-top: 12px" src="${safe(e.image)}" alt="โปสเตอร์">` : ""}
+          <p class="muted" style="margin-top: 10px">${safe(e.desc)}</p>
+          <dl class="info-list">
+            <div><dt>วันเวลา</dt><dd>${eventTime(e)}</dd></div>
+            <div><dt>สถานที่</dt><dd>${safe(e.place)}</dd></div>
+            <div><dt>เจ้าภาพที่จัด</dt><dd>${safe(e.organizer)}</dd></div>
+            <div><dt>จำนวนที่รับ</dt><dd>${e.cap} คน</dd></div>
+            <div><dt>ใครลงทะเบียนได้</dt><dd>${safe(facultyText(e))}</dd></div>
+            <div><dt>แบบฟอร์มสมัคร</dt><dd>${safe(e.formLink) || "-"}</dd></div>
+          </dl>
+          <div class="req-acts">
+            <button class="btn primary" onclick="approveEvent('${e.id}')">อนุมัติโพสต์</button>
+            <button class="btn danger-outline" onclick="rejectEvent('${e.id}')">ไม่อนุมัติ</button>
+          </div>
+        </article>`;
+    }).join("") || '<div class="empty box sm"><p class="muted">ไม่มีกิจกรรมรออนุมัติ</p></div>';
+  }
+
+  function approveEvent(id) {
+    const event = getEventById(id);
+    event.status = "open";
+    event.rejectNote = "";
+    updateEvent(event);
+    showToast("อนุมัติแล้ว กิจกรรมเปิดรับสมัครแล้ว");
+    refresh();
+  }
+
+  function rejectEvent(id) {
+    const reason = prompt("เหตุผลที่ไม่อนุมัติ (ผู้ยื่นจะเห็นข้อความนี้)");
+    if (reason === null || reason.trim() === "") return;
+    const event = getEventById(id);
+    event.status = "rejected";
+    event.rejectNote = reason.trim();
+    updateEvent(event);
+    showToast("ไม่อนุมัติกิจกรรมนี้แล้ว");
+    refresh();
+  }
+
+  function refresh() {
+    showStats();
+    showPending();
+    showEventList();
   }
 
   function toggleEvent(id) {
@@ -161,73 +235,21 @@
     if (!confirm("ลบกิจกรรม \"" + getEventById(id).title + "\" ใช่ไหม?")) return;
     deleteEvent(id);
     showToast("ลบกิจกรรมแล้ว");
-    showEventList();
-    showStats();
+    refresh();
   }
 
   /* ---------- คำขอจัดกิจกรรม ---------- */
 
-  // ปุ่มของแต่ละสถานะ
-  function adminButtonsHTML(r) {
-    if (r.status === "approved" || r.status === "rejected") {
-      return '<p class="muted" style="margin-top: 12px">พิจารณาแล้ว</p>';
-    }
-    const receive = r.status === "sending"
-      ? `<button class="btn ghost" onclick="setStatus('${r.id}', 'processing')">รับเรื่อง (ดำเนินการ)</button>`
-      : "";
-    return `<div class="req-acts">
-        ${receive}
-        <button class="btn primary" onclick="setStatus('${r.id}', 'approved')">อนุมัติ</button>
-        <button class="btn danger-outline" onclick="setStatus('${r.id}', 'rejected')">ไม่อนุมัติ</button>
-      </div>`;
-  }
-
+  // แอดมินเห็นคำขอทุกคณะ (การ์ดกับปุ่มอนุมัติอยู่ใน common.js ใช้ร่วมกับหน้าอาจารย์)
   function showRequests() {
-    // คำขอที่ยังไม่ได้พิจารณาขึ้นก่อน
-    const order = { sending: 0, processing: 1, rejected: 2, approved: 2 };
-    const requests = getRequests().sort((a, b) => order[a.status] - order[b.status]);
-
-    document.getElementById("requestList").innerHTML = requests.map(function (r) {
-      const owner = getUsers().find(u => u.email === r.createdBy);
-      const ownerName = owner ? owner.first + " " + owner.last : r.createdBy;
-      return `
-        <article class="box req">
-          <div class="req-head">
-            <div>
-              <h3>${safe(r.title)}</h3>
-              <small class="muted">ผู้ยื่น: ${safe(ownerName)} · ถึงคณบดี${safe(r.toFaculty)} · ${thaiDate(r.submittedAt)}</small>
-            </div>
-            ${requestBadgeHTML(r)}
-          </div>
-          ${trackerHTML(r)}
-          <p class="muted" style="margin-top: 10px">${safe(r.desc)}</p>
-          <dl class="info-list">
-            <div><dt>วันเวลา</dt><dd>${eventTime(r)}</dd></div>
-            <div><dt>สถานที่</dt><dd>${safe(r.place)}</dd></div>
-            <div><dt>ผู้จัดงาน</dt><dd>${safe(r.organizer)}</dd></div>
-            <div><dt>ผู้รับผิดชอบค่าใช้จ่าย</dt><dd>${safe(r.payer)}${r.budget ? " · งบ " + r.budget.toLocaleString() + " บาท" : ""}</dd></div>
-            <div><dt>จำนวนคน</dt><dd>${r.people} คน</dd></div>
-          </dl>
-          ${r.status === "rejected" ? `<p class="notice err">เหตุผล: ${safe(r.note)}</p>` : ""}
-          ${adminButtonsHTML(r)}
-        </article>`;
-    }).join("") || '<div class="empty box sm"><p class="muted">ยังไม่มีคำขอ</p></div>';
+    document.getElementById("requestList").innerHTML =
+      sortForReview(getRequests()).map(reviewCardHTML).join("") || '<div class="empty box sm"><p class="muted">ยังไม่มีคำขอ</p></div>';
   }
 
-  // เปลี่ยนสถานะคำขอ
+  // ปุ่มในการ์ดคำขอเรียกฟังก์ชันนี้
   function setStatus(id, status) {
-    const request = getRequestById(id);
-
-    if (status === "rejected") {
-      const reason = prompt("เหตุผลที่ไม่อนุมัติ (ผู้ยื่นจะเห็นข้อความนี้)");
-      if (reason === null || reason.trim() === "") return; // กดยกเลิก หรือไม่ได้พิมพ์
-      request.note = reason.trim();
-    }
-
-    request.status = status;
-    updateRequest(request);
+    if (!reviewRequest(id, status)) return;
     showStats();
-    showToast("เปลี่ยนสถานะเป็น \"" + REQUEST_STATUS[status].text + "\" แล้ว");
     showRequests();
   }
 
@@ -246,37 +268,76 @@
     showNews();
   }
 
+  /* ---------- ผู้ใช้ ---------- */
+  const YEARS = ["ปี 1", "ปี 2", "ปี 3", "ปี 4", "ปี 5 ขึ้นไป"];
+
+  function optionsHTML(list, selected) {
+    // ค่าเดิมไม่อยู่ในรายการ (เช่น ชื่อคณะเก่า) ก็ใส่ไว้ด้วย ข้อมูลจะได้ไม่หาย
+    if (selected && !list.includes(selected)) list = [selected, ...list];
+    return list.map(v => `<option value="${safe(v)}"${v === selected ? " selected" : ""}>${safe(v)}</option>`).join("");
+  }
+
+  function showUsers() {
+    const keyword = document.getElementById("userSearch").value.trim().toLowerCase();
+    const users = getUsers()
+      .filter(u => !isAdmin(u))
+      .filter(u => (u.first + " " + u.last + " " + u.email + " " + u.studentId).toLowerCase().includes(keyword));
+
+    document.getElementById("userList").innerHTML = users.map(function (u) {
+      const student = !isStaff(u);
+      return `
+        <form class="box row-item" data-email="${safe(u.email)}">
+          <div>
+            <h3>${safe(u.first + " " + u.last)}</h3>
+            <small class="muted">${safe(u.email)} · ${student ? "นักศึกษา" : safe(u.position)}</small>
+          </div>
+          <div class="row-acts">
+            ${student ? `<input class="mini" name="studentId" value="${safe(u.studentId)}" maxlength="8" inputmode="numeric" aria-label="รหัสนักศึกษา">` : ""}
+            <select class="mini" name="faculty" aria-label="คณะ">${optionsHTML(FACULTIES, u.faculty)}</select>
+            ${student ? `<select class="mini" name="year" aria-label="ชั้นปี">${optionsHTML(YEARS, u.year)}</select>` : ""}
+            <button class="btn primary sm">บันทึก</button>
+          </div>
+        </form>`;
+    }).join("") || '<div class="empty box sm"><p class="muted">ไม่พบผู้ใช้</p></div>';
+  }
+
+  // กดบันทึกในแถวไหนก็ได้ (ฟอร์มถูกสร้างใหม่ทุกครั้ง เลยดักที่กล่องรายการแทน)
+  document.getElementById("userList").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const row = e.target;
+    const users = getUsers();
+    const user = users.find(u => u.email === row.dataset.email);
+
+    if (row.elements.studentId) {
+      const studentId = row.elements.studentId.value.trim();
+      if (!/^\d{8}$/.test(studentId)) {
+        showToast("รหัสนักศึกษาต้องเป็นตัวเลข 8 หลัก");
+        return;
+      }
+      user.studentId = studentId;
+      user.year = row.elements.year.value;
+    }
+    user.faculty = row.elements.faculty.value;
+    saveUsers(users);
+    showToast("บันทึกข้อมูลของ " + user.first + " แล้ว");
+  });
+
+  document.getElementById("userSearch").addEventListener("input", showUsers);
+  showUsers();
+
   const newsForm = document.getElementById("newsForm");
   const imgPreview = document.getElementById("imgPreview");
   let posterImage = ""; // รูปโปสเตอร์ที่แปลงเป็นข้อความ (data URL) เพื่อเก็บใน localStorage ได้
 
-  // เลือกไฟล์โปสเตอร์: ย่อรูปให้กว้างไม่เกิน 1000px แล้วแสดงตัวอย่าง
-  // (ต้องย่อ เพราะ localStorage เก็บได้แค่ประมาณ 5MB)
   newsForm.elements.image.addEventListener("change", function () {
-    const file = this.files[0];
     posterImage = "";
     imgPreview.hidden = true;
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function () {
-      const img = new Image();
-      img.onload = function () {
-        const scale = Math.min(1, 1000 / img.width);
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-        const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "#fff"; // พื้นขาว (กันรูป PNG พื้นใสกลายเป็นสีดำ)
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        posterImage = canvas.toDataURL("image/jpeg", 0.8);
-        imgPreview.src = posterImage;
-        imgPreview.hidden = false;
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
+    if (!this.files[0]) return;
+    resizeImage(this.files[0], 1000, function (dataUrl) {
+      posterImage = dataUrl;
+      imgPreview.src = dataUrl;
+      imgPreview.hidden = false;
+    });
   });
 
   newsForm.addEventListener("submit", function (e) {
@@ -322,8 +383,10 @@
 
   showStats();
   showRequests();
+  showPending();
   showEventList();
   showNews();
 </script>
+<script src="js/lang.js"></script>
 </body>
 </html>

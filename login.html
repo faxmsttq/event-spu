@@ -47,6 +47,7 @@
           <button type="button" class="btn ghost block" id="adminDemoBtn"><i class="icon icon-18 i-shield"></i>ลองใช้บัญชีแอดมิน</button>
         </div>
         <p class="muted">ยังไม่มีบัญชี? <a class="link strong" href="signup.html">สมัครสมาชิก</a></p>
+        <p class="muted">อาจารย์ / เจ้าหน้าที่? <a class="link strong" href="staff-login.html">เข้าสู่ระบบบุคลากร</a></p>
       </form>
     </div>
   </main>
@@ -55,10 +56,8 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
-  // ===== หน้าเข้าสู่ระบบ =====
   const form = document.getElementById("loginForm");
 
-  // เมื่อกดปุ่ม "เข้าสู่ระบบ"
   form.addEventListener("submit", function (e) {
     e.preventDefault(); // ไม่ให้เบราว์เซอร์โหลดหน้าใหม่เอง
 
@@ -80,11 +79,11 @@
     enter(user);
   });
 
-  // เข้าสู่ระบบสำเร็จ: แอดมินไปหน้าจัดการระบบ นักศึกษาไปหน้ากิจกรรม
+  // เข้าสู่ระบบสำเร็จ: แอดมินไปหน้าจัดการระบบ อาจารย์ไปหน้าพิจารณาคำขอ นักศึกษาไปหน้ากิจกรรม
   function enter(user) {
     login(user.email);
     toastOnNextPage("ยินดีต้อนรับ " + user.first);
-    location.href = isAdmin(user) ? "admin.html" : "events.html";
+    location.href = homePageOf(user);
   }
 
   // ปุ่ม "ลองใช้บัญชี...": เข้าสู่ระบบด้วยบัญชีตัวอย่างทันที
@@ -114,8 +113,8 @@
   document.getElementById("demoBtn").addEventListener("click", () => useSampleAccount(SAMPLE_USER));
   document.getElementById("adminDemoBtn").addEventListener("click", () => useSampleAccount(SAMPLE_ADMIN));
 
-  // พิมพ์ใหม่แล้วซ่อนข้อความ error
   form.addEventListener("input", () => hideFormError(form));
 </script>
+<script src="js/lang.js"></script>
 </body>
 </html>

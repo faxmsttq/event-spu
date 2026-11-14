@@ -561,9 +561,8 @@ function trackerHTML(request) {
 
 
 // คนพิจารณาคำขอ: แอดมินได้ทุกคณะ อาจารย์/เจ้าหน้าที่ได้เฉพาะคำขอที่ส่งถึงคณบดีคณะตัวเอง
-// และห้ามพิจารณาคำขอที่ตัวเองเป็นคนยื่น (ต้องให้คนอื่นอนุมัติ)
+// (คำขอที่ตัวเองเป็นคนยื่น ก็อนุมัติเองได้)
 function canReview(user, request) {
-  if (!user || request.createdBy === user.email) return false;
   return isAdmin(user) || (isStaff(user) && request.toFaculty === user.faculty);
 }
 
@@ -579,10 +578,7 @@ function reviewCardHTML(r) {
   const ownerName = owner ? owner.first + " " + owner.last : r.createdBy;
 
   let actions = `<p class="muted" style="margin-top: 12px">${r.reviewedBy ? "พิจารณาโดย " + safe(r.reviewedBy) : "พิจารณาแล้ว"}</p>`;
-  const waiting = r.status === "sending" || r.status === "processing";
-  if (waiting && !canReview(getCurrentUser(), r)) {
-    actions = `<p class="notice" style="margin-top: 12px">คำขอนี้คุณเป็นคนยื่นเอง ต้องให้คนอื่นเป็นผู้พิจารณา</p>`;
-  } else if (waiting) {
+  if (r.status === "sending" || r.status === "processing") {
     actions = `<div class="req-acts">
         ${r.status === "sending" ? `<button class="btn ghost" onclick="setStatus('${r.id}', 'processing')">รับเรื่อง (ดำเนินการ)</button>` : ""}
         <button class="btn primary" onclick="setStatus('${r.id}', 'approved')">อนุมัติ</button>

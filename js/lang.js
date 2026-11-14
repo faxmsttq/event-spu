@@ -190,7 +190,6 @@ const EN = {
   "รหัสนักศึกษานี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบแทน": "This student ID already has an account. Try logging in.",
   "รหัสนักศึกษานี้มีคนใช้แล้ว": "This student ID is already in use",
   "เฉพาะนักศึกษาลงทะเบียนได้": "Only students can register",
-  "คำขอนี้คุณเป็นคนยื่นเอง ต้องให้คนอื่นเป็นผู้พิจารณา": "You submitted this request yourself, so someone else must review it",
   "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร": "Password must be at least 8 characters", "ยืนยันรหัสผ่านไม่ตรงกัน": "Passwords don't match",
   "กรุณายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัว": "Please accept the terms and privacy policy", "ไม่พบบัญชีที่ใช้อีเมลนี้": "No account uses this email",
   "ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลแล้ว (ตัวอย่าง)": "Reset link sent to your email (demo)",

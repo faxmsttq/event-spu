@@ -136,8 +136,12 @@
   const user = requireLogin();
   const request = getRequestById(new URLSearchParams(location.search).get("request"));
 
-  // สร้างได้เฉพาะคำขอของตัวเอง ที่อนุมัติแล้ว และยังไม่เคยสร้างกิจกรรม
-  const canCreate = request && request.createdBy === user.email && request.status === "approved" && !request.eventId;
+  // ถ้าเคยส่งไปแล้วแต่แอดมินไม่อนุมัติโพสต์ จะแก้ของเดิมแล้วส่งใหม่ได้ (ข้อมูลที่เคยกรอกยังอยู่)
+  const oldEvent = request && request.eventId ? getEventById(request.eventId) : null;
+  const fixing = oldEvent !== null && oldEvent !== undefined && oldEvent.status === "rejected";
+
+  // สร้างได้เฉพาะคำขอของตัวเอง ที่อนุมัติแล้ว และยังไม่เคยสร้างกิจกรรม (หรือกิจกรรมเดิมโดนแอดมินไม่อนุมัติ)
+  const canCreate = request && request.createdBy === user.email && request.status === "approved" && (!request.eventId || fixing);
   if (!canCreate) {
     document.getElementById("noRequest").hidden = false;
     document.getElementById("createArea").hidden = true;
@@ -147,7 +151,7 @@
   const form = document.getElementById("createForm");
   const f = form.elements;
   const STEP_NAMES = ["", "ข้อมูลเพิ่มเติม", "ตรวจสอบก่อนส่ง"];
-  const newId = "u" + Date.now();
+  const newId = fixing ? oldEvent.id : "u" + Date.now(); // แก้ของเดิม = ใช้ id เดิม
   let step = 1;
 
   // ข้อมูลที่กรอกไว้ตอนยื่นคำขอแล้ว ใช้ต่อเลย ไม่ต้องกรอกซ้ำ
@@ -173,9 +177,23 @@
   f.contactName.value = user.first + " " + user.last;
   f.contactEmail.value = user.email;
 
+  // แก้แล้วส่งใหม่: เอาข้อมูลที่เคยกรอกกลับมาใส่ให้ และบอกเหตุผลที่แอดมินไม่อนุมัติ
+  if (fixing) {
+    document.getElementById("approvedNote").textContent = "แอดมินไม่อนุมัติโพสต์: " + (oldEvent.rejectNote || "-") + " · แก้ไขข้อมูลแล้วส่งใหม่ได้เลย";
+    document.getElementById("approvedNote").classList.add("err");
+    ["poster", "tagline", "who", "bring", "formLink", "contactName", "contactPhone", "contactEmail"].forEach(function (name) {
+      f[name].value = oldEvent[name] || "";
+    });
+    f.cat.value = oldEvent.cat;
+  }
+
   // รูปโปสเตอร์ (ถ้ามี)
-  let posterImage = "";
+  let posterImage = fixing ? oldEvent.image || "" : "";
   const imgPreview = document.getElementById("imgPreview");
+  if (posterImage) {
+    imgPreview.src = posterImage;
+    imgPreview.hidden = false;
+  }
   f.image.addEventListener("change", function () {
     posterImage = "";
     imgPreview.hidden = true;
@@ -256,7 +274,8 @@
     }
 
     // บันทึกกิจกรรม และจำไว้ว่าคำขอนี้สร้างกิจกรรมแล้ว
-    const events = getEvents();
+    // แก้ของเดิม = แทนที่กิจกรรมเดิม (สถานะกลับเป็นรอแอดมินอนุมัติ), สร้างใหม่ = เพิ่มต่อท้าย
+    const events = getEvents().filter(e => e.id !== newId);
     events.push(getFormEvent());
     try {
       saveEvents(events);

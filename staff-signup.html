@@ -67,6 +67,8 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
+  redirectIfLoggedIn(); // ล็อกอินอยู่แล้ว ไม่ต้องเห็นหน้านี้ พาไปหน้าหลักเลย
+
   const form = document.getElementById("signupForm");
 
   function checkForm(d) {

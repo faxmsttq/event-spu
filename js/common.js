@@ -388,6 +388,23 @@ function homePageOf(user) {
   return "events.html";
 }
 
+// หน้าแรก / เข้าสู่ระบบ / สมัคร: ถ้าล็อกอินอยู่แล้ว พาไปหน้าหลักของบัญชีนั้นเลย
+function redirectIfLoggedIn() {
+  const user = getCurrentUser();
+  if (user !== null) location.replace(homePageOf(user));
+}
+
+// เมนูด้านล่างของอาจารย์ / เจ้าหน้าที่ (ทุกหน้าใช้เมนูเดียวกับหน้าพิจารณาคำขอ ไม่ใช่เมนูของนักศึกษา)
+function setupStaffTabbar() {
+  const nav = document.querySelector(".tabbar");
+  if (!nav || !isStaff(getCurrentUser())) return;
+  const page = location.pathname.split("/").pop() || "index.html";
+  const items = [["review.html", "i-shield", "พิจารณาคำขอ"], ["events.html", "i-house", "กิจกรรม"], ["profile.html", "i-user", "โปรไฟล์"]];
+  nav.innerHTML = items.map(([href, icon, text]) =>
+    `<a href="${href}"${href === page ? ' class="on"' : ""}><i class="icon ${icon}"></i>${text}</a>`
+  ).join("");
+}
+
 // หน้าที่ต้องล็อกอินก่อน ถ้ายังไม่ล็อกอินจะเด้งไปหน้า login แล้วหยุดโค้ดที่เหลือ
 function requireLogin() {
   const user = getCurrentUser();
@@ -521,8 +538,8 @@ function deleteEvent(id) {
 const REQUEST_STATUS = {
   sending: { text: "กำลังส่ง", badge: "info" },
   processing: { text: "กำลังดำเนินการ", badge: "wait" },
-  approved: { text: "ดำเนินการสำเร็จ · อนุมัติ", badge: "ok" },
-  rejected: { text: "ดำเนินการไม่สำเร็จ", badge: "no" }
+  approved: { text: "อนุมัติแล้ว", badge: "ok" },
+  rejected: { text: "ไม่อนุมัติ", badge: "no" }
 };
 
 function requestBadgeHTML(request) {
@@ -819,6 +836,8 @@ document.querySelectorAll('input[type="password"]').forEach(function (input) {
   });
   wrap.appendChild(button);
 });
+
+setupStaffTabbar();
 
 const waitingToast = sessionStorage.getItem("spu_toast");
 if (waitingToast) {

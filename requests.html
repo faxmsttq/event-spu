@@ -94,9 +94,8 @@
     return `<div class="req-acts"><a class="btn primary" href="create.html?request=${r.id}">ไปต่อหน้าสร้างกิจกรรม <i class="icon icon-18 i-arrow-right"></i></a></div>`;
   }
 
-  // กิจกรรมโดนแอดมินปฏิเสธ: ลบอันเดิมทิ้ง แล้วกลับไปกรอกหน้าสร้างกิจกรรมใหม่
+  // กิจกรรมโดนแอดมินปฏิเสธ: กลับไปหน้าสร้างกิจกรรม ข้อมูลเดิมยังอยู่ แก้แล้วส่งใหม่ได้เลย
   function redo(requestId) {
-    deleteEvent(getRequestById(requestId).eventId);
     location.href = "create.html?request=" + requestId;
   }
 

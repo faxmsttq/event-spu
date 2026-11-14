@@ -13,6 +13,7 @@ const EN = {
   "แสดง": "Show", "ซ่อน": "Hide", "ไปหน้ากิจกรรม": "Go to events", "กลับหน้าหลัก": "Back to home",
   "กลับไปหน้ากิจกรรม": "Back to events", "กลับไปหน้าคำขอ": "Back to requests", "กลับไปหน้าเข้าสู่ระบบ": "Back to log in",
   "© SPU Event · ข้อมูลกิจกรรมเป็นข้อมูลตัวอย่าง": "© SPU Event · Event data is sample data",
+  "ข้อมูลกิจกรรมเป็นข้อมูลตัวอย่าง": "Event data is sample data",
 
   // หมวดหมู่ / สถานะ
   "วิชาการ": "Academic", "ความบันเทิง": "Entertainment", "กีฬา": "Sports", "จิตอาสา": "Volunteer",
@@ -188,6 +189,7 @@ const EN = {
   "อีเมลนี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบแทน": "This email already has an account. Try logging in.",
   "รหัสนักศึกษานี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบแทน": "This student ID already has an account. Try logging in.",
   "รหัสนักศึกษานี้มีคนใช้แล้ว": "This student ID is already in use",
+  "เฉพาะนักศึกษาลงทะเบียนได้": "Only students can register",
   "คำขอนี้คุณเป็นคนยื่นเอง ต้องให้คนอื่นเป็นผู้พิจารณา": "You submitted this request yourself, so someone else must review it",
   "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร": "Password must be at least 8 characters", "ยืนยันรหัสผ่านไม่ตรงกัน": "Passwords don't match",
   "กรุณายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัว": "Please accept the terms and privacy policy", "ไม่พบบัญชีที่ใช้อีเมลนี้": "No account uses this email",
@@ -251,6 +253,7 @@ const EN_PATTERNS = [
   [/^(.+@.+) · นักศึกษา$/, m => m[1] + " · Student"],
   [/^(.+@.+) · (อาจารย์|เจ้าหน้าที่)$/, m => m[1] + " · " + translate(m[2])],
   [/^พิจารณาโดย (.+)$/, m => "Reviewed by " + m[1]],
+  [/^แอดมินไม่อนุมัติโพสต์: (.+) · แก้ไขข้อมูลแล้วส่งใหม่ได้เลย$/, m => "Admin rejected the post: " + m[1] + " · Edit and resubmit"],
   [/^คำขอที่ส่งถึงคณบดี(.+)$/, m => "Requests sent to the Dean of " + translate(m[1])],
   [/^(อาจารย์|เจ้าหน้าที่) · (.+) · เห็นและอนุมัติได้เฉพาะคำขอที่ส่งถึงคณบดีคณะนี้$/, m => translate(m[1]) + " · " + translate(m[2]) + " · You can only see and approve requests sent to this faculty's Dean"],
   [/^(อาจารย์|เจ้าหน้าที่) · (.+)$/, m => translate(m[1]) + " · " + translate(m[2])],

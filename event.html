@@ -175,6 +175,9 @@
       joinBtn.textContent = "กิจกรรมจบแล้ว";
     } else if (!isOpen(event)) {
       joinBtn.textContent = "ปิดรับสมัคร";
+    } else if (isAdmin(user) || isStaff(user)) {
+      // ที่นั่งมีไว้ให้นักศึกษา แอดมินกับอาจารย์ลงทะเบียนไม่ได้
+      joinBtn.textContent = "เฉพาะนักศึกษาลงทะเบียนได้";
     } else if (!allowed) {
       joinBtn.innerHTML = '<i class="icon icon-18 i-lock"></i> ' + safe(facultyText(event));
     } else {
@@ -253,6 +256,7 @@
   // ---------- ปุ่มของผู้เข้าร่วม ----------
 
   joinBtn.addEventListener("click", function () {
+    if (isAdmin(getCurrentUser()) || isStaff(getCurrentUser())) return; // ลงทะเบียนได้เฉพาะนักศึกษา
     const event = getEventById(eventId);
     if (!confirm("ยืนยันเข้าร่วม \"" + event.title + "\" ใช่ไหม?")) return;
 

@@ -114,17 +114,14 @@
 </main>
 
 <footer class="footer">
-  <div class="container">© SPU Event · ข้อมูลกิจกรรมเป็นข้อมูลตัวอย่าง · <a class="link" href="staff-login.html">สำหรับอาจารย์และเจ้าหน้าที่</a></div>
+  <div class="container">© SPU Event · <span>ข้อมูลกิจกรรมเป็นข้อมูลตัวอย่าง</span> · <a class="link" href="staff-login.html">สำหรับอาจารย์และเจ้าหน้าที่</a></div>
 </footer>
 
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
-  // ถ้าล็อกอินอยู่แล้ว เปลี่ยนปุ่มด้านบนเป็น "ไปหน้ากิจกรรม"
-  if (getCurrentUser()) {
-    document.getElementById("topActions").innerHTML =
-      '<a class="btn primary sm" href="events.html">ไปหน้ากิจกรรม <i class="icon icon-18 i-arrow-right"></i></a>';
-  }
+  // ถ้าล็อกอินอยู่แล้ว พาไปหน้าหลักของบัญชีนั้นเลย (นักศึกษา → กิจกรรม, อาจารย์ → พิจารณาคำขอ, แอดมิน → จัดการระบบ)
+  redirectIfLoggedIn();
 
   // การ์ดตัวอย่าง: ใช้กิจกรรมที่เปิดรับอยู่จริง (วันที่และจำนวนที่ว่างจะตรงเสมอ)
   // ถ้ายังไม่ล็อกอิน กดการ์ดแล้วหน้า event.html จะพาไปหน้าเข้าสู่ระบบเอง

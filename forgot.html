@@ -44,6 +44,8 @@
 <div id="toast"></div>
 <script src="js/common.js"></script>
 <script>
+  redirectIfLoggedIn(); // ล็อกอินอยู่แล้ว ไม่ต้องเห็นหน้านี้ พาไปหน้าหลักเลย
+
   // ยังไม่มีหลังบ้าน จึงส่งอีเมลจริงไม่ได้ ตอนนี้แค่ตรวจว่ามีบัญชีนี้อยู่จริง
   const form = document.getElementById("forgotForm");
 

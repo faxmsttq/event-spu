@@ -92,7 +92,7 @@ const EN = {
   "รับลิงก์ตั้งรหัสผ่านใหม่ทางอีเมล": "Get a reset link by email", "กลับมาเข้าสู่ระบบได้ทันที": "Log in again right away",
 
   // หน้ากิจกรรม
-  "สนใจทำกิจกรรมอะไรดี?": "What would you like to do?", "วันนี้ไปไหนดี?": "Where to today?",
+  "สนใจทำกิจกรรมอะไรดี?": "What would you like to do?", 
   "ประกาศ / ประชาสัมพันธ์": "Announcements", "ค้นหากิจกรรมที่สนใจ": "Search events", "ค้นหากิจกรรม": "Find events",
   "วันที่ใกล้สุด": "Soonest first", "วันที่ไกลสุด": "Latest first",
   "ไม่พบกิจกรรมที่ตรงกับการค้นหา": "No events match your search", "ลองเปลี่ยนคำค้นหา หรือล้างตัวกรอง": "Try another search or clear the filters",
@@ -105,7 +105,6 @@ const EN = {
   "เกี่ยวกับกิจกรรม": "About this event", "ผู้เข้าร่วม": "Who can join", "สิ่งที่ต้องเตรียม": "What to bring",
   "ติดต่อผู้จัดกิจกรรม": "Contact the organizer", "เจ้าภาพ:": "Host:", "ผู้ติดต่อ:": "Contact:",
   "คุณเป็นผู้จัดกิจกรรมนี้": "You are the organizer", "กิจกรรมจบแล้ว": "This event has ended", "ยังไม่มีรายละเอียด": "No details yet",
-  "ลงทะเบียนได้:": "Who can register:",
   "เครื่องมือผู้จัด": "Organizer tools", "ดาวน์โหลดรายชื่อ (Excel)": "Download list (Excel)", "เปิดรับสมัครอีกครั้ง": "Reopen registration",
   "ลบกิจกรรม": "Delete event", "ยังไม่มีผู้สมัครผ่านระบบ": "No registrations yet", "ไม่เปิดเผยชื่อ": "Name hidden",
 
@@ -142,9 +141,8 @@ const EN = {
   "เบอร์โทร": "Phone", "อีเมล / Line": "Email / Line", "แบบฟอร์มสมัคร": "Registration form", "เจ้าภาพ / ผู้ติดต่อ": "Host / contact",
   "ใครลงทะเบียนได้": "Who can register", "ทุกคณะลงทะเบียนได้": "All faculties can register", "เฉพาะคณะที่เลือก": "Selected faculties only",
   "เลือกได้หลายคณะ นักศึกษาคณะอื่นจะเห็นกิจกรรม แต่กดลงทะเบียนไม่ได้": "You can pick several. Students from other faculties can see the event but can't register.",
-  "กด \"โพสต์กิจกรรม\" แล้วกิจกรรมจะแสดงให้ทุกคนเห็นและเปิดรับสมัครทันที": "Press \"Post event\" and it will be visible to everyone with registration open.",
-  "ข้อมูลกิจกรรม": "Event info", "วันเวลา สถานที่ และผู้ติดต่อ": "Date, venue and contact", "ตรวจสอบก่อนโพสต์": "Review before posting",
-  "โพสต์กิจกรรม": "Post event", "ไม่มี (สมัครผ่านปุ่มเข้าร่วมในเว็บ)": "None (join with the button on the site)",
+  "ข้อมูลกิจกรรม": "Event info", 
+  "ไม่มี (สมัครผ่านปุ่มเข้าร่วมในเว็บ)": "None (join with the button on the site)",
 
   // แจ้งเตือน
   "กิจกรรมเริ่มวันนี้": "Event starts today", "ยินดีต้อนรับสู่ SPU Event": "Welcome to SPU Event",
@@ -172,7 +170,7 @@ const EN = {
   "เพิ่มประกาศ / ประชาสัมพันธ์": "Add announcement", "เพิ่มประกาศ": "Add announcement", "ประเภท": "Type", "สีโปสเตอร์": "Poster color",
   "ชมพู": "Pink", "ส้ม": "Orange", "ฟ้า": "Blue", "เขียว": "Green", "หัวข้อ": "Title",
   "ข้อความสั้น (แสดงบนการ์ด)": "Short text (shown on the card)", "รายละเอียด (แสดงในหน้าดูรายละเอียด)": "Details (shown on the details page)",
-  "ไฟล์โปสเตอร์ (ถ้ามี)": "Poster image (optional)", "รองรับ JPG / PNG รูปจะถูกย่อให้เล็กลงอัตโนมัติ": "JPG / PNG. Images are resized automatically",
+  "ไฟล์โปสเตอร์ (ถ้ามี)": "Poster image (optional)", 
   "ตัวอย่างโปสเตอร์": "Poster preview", "ลิงก์ที่เกี่ยวข้อง (ถ้ามี)": "Related link (optional)", "ประกาศที่แสดงอยู่": "Current announcements",
 
   // ตัวอย่างในช่องกรอก (placeholder)
@@ -188,6 +186,9 @@ const EN = {
   "กรุณากรอกชื่อและนามสกุล": "Please enter your first and last name", "รหัสนักศึกษาต้องเป็นตัวเลข 8 หลัก": "Student ID must be 8 digits",
   "กรุณาเลือกคณะ": "Please select a faculty", "กรุณาใช้อีเมลมหาวิทยาลัย (@spumail.net)": "Please use your university email (@spumail.net)",
   "อีเมลนี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบแทน": "This email already has an account. Try logging in.",
+  "รหัสนักศึกษานี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบแทน": "This student ID already has an account. Try logging in.",
+  "รหัสนักศึกษานี้มีคนใช้แล้ว": "This student ID is already in use",
+  "คำขอนี้คุณเป็นคนยื่นเอง ต้องให้คนอื่นเป็นผู้พิจารณา": "You submitted this request yourself, so someone else must review it",
   "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร": "Password must be at least 8 characters", "ยืนยันรหัสผ่านไม่ตรงกัน": "Passwords don't match",
   "กรุณายอมรับข้อกำหนดและนโยบายความเป็นส่วนตัว": "Please accept the terms and privacy policy", "ไม่พบบัญชีที่ใช้อีเมลนี้": "No account uses this email",
   "ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลแล้ว (ตัวอย่าง)": "Reset link sent to your email (demo)",
@@ -202,13 +203,12 @@ const EN = {
   "ดาวน์โหลดไฟล์ปฏิทินแล้ว": "Calendar file downloaded", "ดาวน์โหลดรายชื่อแล้ว": "List downloaded", "คัดลอกลิงก์แล้ว ส่งให้เพื่อนได้เลย": "Link copied. Share it with friends",
   "คัดลอกลิงก์นี้": "Copy this link", "เปิดรับสมัครแล้ว": "Registration opened", "ปิดรับสมัครแล้ว": "Registration closed",
   "ลบกิจกรรมแล้ว": "Event deleted", "ลบประกาศแล้ว": "Announcement deleted", "เพิ่มประกาศแล้ว ไปดูได้ที่หน้ากิจกรรม": "Announcement added. See it on the Events page",
-  "โพสต์กิจกรรมแล้ว": "Event posted", "ส่งคำขอถึงคณบดีแล้ว ติดตามสถานะได้ที่หน้านี้": "Request sent to the Dean. Track its status here",
+  "ส่งคำขอถึงคณบดีแล้ว ติดตามสถานะได้ที่หน้านี้": "Request sent to the Dean. Track its status here",
   "กรุณากรอกชื่อกิจกรรม": "Please enter the event name", "กรุณากรอกรายละเอียดและวัตถุประสงค์": "Please enter the details and purpose",
   "กรุณาเลือกวันที่": "Please choose a date", "วันที่ต้องไม่ย้อนหลัง": "The date can't be in the past",
   "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม": "End time must be after start time", "เวลาสิ้นสุดของวันนี้ผ่านไปแล้ว กรุณาเลือกเวลาใหม่": "Today's end time has passed. Please choose another time",
   "กรุณากรอกสถานที่": "Please enter the venue", "กรุณากรอกผู้จัดงาน": "Please enter the organizer", "กรุณากรอกผู้รับผิดชอบค่าใช้จ่าย": "Please enter who pays",
   "จำนวนคนต้องมีอย่างน้อย 1 คน": "Attendees must be at least 1", "งบประมาณต้องไม่ติดลบ": "Budget can't be negative",
-  "จำนวนที่รับต้องมีอย่างน้อย 1 คน": "Capacity must be at least 1", "กรุณากรอกเจ้าภาพที่จัด": "Please enter the host",
   "กรุณากรอกชื่อผู้ติดต่อ": "Please enter a contact name", "กรุณากรอกเบอร์โทร หรืออีเมล / Line อย่างน้อย 1 ช่อง": "Please enter a phone number or email / Line",
   "ลิงก์แบบฟอร์มต้องขึ้นต้นด้วย http:// หรือ https://": "The form link must start with http:// or https://",
   "กรุณาเลือกอย่างน้อย 1 คณะ": "Please select at least 1 faculty",
@@ -239,7 +239,6 @@ const EN_PATTERNS = [
   [/^SPU \/ (.+)$/, m => "SPU / " + translate(m[1])],
   [/^(.+) · SPU Event$/, m => translate(m[1]) + " · SPU Event"],
   [/^เฉพาะ (.+)$/, m => "Only " + m[1].split(", ").map(translate).join(", ")],
-  [/^กิจกรรมนี้ลงทะเบียนได้เฉพาะ (.+)$/, m => "Only these faculties can register: " + m[1].split(", ").map(translate).join(", ")],
   [/^(\d+) · (.+)$/, m => m[1] + " · " + translate(m[2])], // "66123456 · คณะ..." ในหน้าโปรไฟล์
   [/^ผู้ดูแลระบบ · (.+)$/, m => "Administrator · " + translate(m[1])],
   [/^มีกิจกรรมรออนุมัติโพสต์ (\d+) รายการ$/, m => m[1] + " events waiting for approval"],

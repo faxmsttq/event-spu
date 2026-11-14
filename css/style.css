@@ -546,8 +546,10 @@ a.card:hover .poster.has-img img { transform: scale(1.05); }
   .page-head { padding-top: 28px; }
   .page-head h1 { font-size: 26px; }
   .greet { padding-top: 24px; }
-  .seg { display: flex; }
-  .seg button { flex: 1; min-width: 0; }
+  /* แท็บเต็มความกว้าง ถ้าแท็บเยอะจนล้น (เช่นหน้าแอดมิน 5 แท็บ) ให้เลื่อนซ้าย-ขวาได้ ตัวหนังสือไม่หักบรรทัด */
+  .seg { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .seg::-webkit-scrollbar { display: none; }
+  .seg button { flex: 1 0 auto; min-width: 0; white-space: nowrap; }
   .poster.big { height: 200px; }
   .detail-side h1, .detail-about h2 { font-size: 24px; }
   .stats { grid-template-columns: repeat(3, 1fr); }
@@ -558,8 +560,19 @@ a.card:hover .poster.has-img img { transform: scale(1.05); }
   .box { padding: 20px; }
 }
 
+@media (max-width: 480px) {
+  /* จอมือถือแคบ: ซ่อนปุ่ม "เข้าสู่ระบบ" ด้านบนของหน้าแรก (ยังมีปุ่มนี้ในส่วนหัวสีชมพูอยู่แล้ว) ปุ่มจะได้ไม่ล้นจอ */
+  .hide-sm { display: none; }
+}
+
 @media (max-width: 420px) {
   .two { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 360px) {
+  /* จอเล็กมาก (เช่น 320px): ลดช่องว่างแถบด้านบน ปุ่มจะได้ไม่ล้นขอบ */
+  .topbar-in { gap: 8px; }
+  .top-actions { gap: 8px; }
 }
 
 /* ถ้าผู้ใช้ตั้งค่าเครื่องให้ลดการเคลื่อนไหว จะปิดอนิเมชั่นทั้งหมด */

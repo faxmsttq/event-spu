@@ -83,6 +83,7 @@
   function checkForm(data) {
     if (data.first === "" || data.last === "") return "กรุณากรอกชื่อและนามสกุล";
     if (!/^\d{8}$/.test(data.studentId)) return "รหัสนักศึกษาต้องเป็นตัวเลข 8 หลัก";
+    if (getUsers().some(u => u.studentId === data.studentId)) return "รหัสนักศึกษานี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบแทน";
     if (data.faculty === "") return "กรุณาเลือกคณะ";
     if (!isSpuEmail(data.email)) return "กรุณาใช้อีเมลมหาวิทยาลัย (@spumail.net)";
     if (getUsers().some(u => u.email === data.email)) return "อีเมลนี้มีบัญชีอยู่แล้ว ลองเข้าสู่ระบบแทน";

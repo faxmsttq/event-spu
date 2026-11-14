@@ -141,7 +141,7 @@
   function showStats() {
     const waiting = getRequests().filter(r => r.status === "sending" || r.status === "processing").length;
     const pending = getEvents().filter(e => e.status === "pending").length;
-    const students = getUsers().filter(u => !isAdmin(u)).length;
+    const students = getUsers().filter(u => !isAdmin(u) && !isStaff(u)).length; // นับเฉพาะนักศึกษา ไม่นับอาจารย์ / เจ้าหน้าที่
     const seats = getEvents().reduce((sum, e) => sum + e.joined, 0);
     const stats = [[waiting, "คำขอรอพิจารณา"], [pending, "กิจกรรมรออนุมัติ"], [students, "นักศึกษาในระบบ"], [seats, "ที่นั่งที่ถูกจองแล้ว"]];
     document.getElementById("stats").innerHTML = stats.map(s => `<div class="box"><b>${s[0].toLocaleString()}</b><small>${s[1]}</small></div>`).join("");
@@ -312,6 +312,11 @@
       const studentId = row.elements.studentId.value.trim();
       if (!/^\d{8}$/.test(studentId)) {
         showToast("รหัสนักศึกษาต้องเป็นตัวเลข 8 หลัก");
+        return;
+      }
+      // รหัสนักศึกษาห้ามซ้ำกับคนอื่น
+      if (users.some(u => u !== user && u.studentId === studentId)) {
+        showToast("รหัสนักศึกษานี้มีคนใช้แล้ว");
         return;
       }
       user.studentId = studentId;
